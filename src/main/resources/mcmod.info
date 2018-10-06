@@ -1,0 +1,22 @@
+[{
+  "modid": "gtce2oc",
+  "name": "GregTech CE to OpenComputers adapter",
+  "description": "Provides integration of GregTech Community Edition to OpenComputers",
+  "version": "${version}",
+  "mcversion": "${mcversion}",
+  "url": "",
+  "updateUrl": "",
+  "authorList": ["iamtakingiteasy"],
+  "credits": "OpenComputers & GregTechCE",
+  "logoFile": "",
+  "screenshots": [],
+  "requiredMods": [
+    "OpenComputers",
+    "gregtech"
+  ],
+  "dependencies": [
+    "OpenComputers",
+    "gregtech"
+  ],
+  "useDependencyInformation": "true"
+}]

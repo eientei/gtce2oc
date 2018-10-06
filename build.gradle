@@ -1,0 +1,91 @@
+buildscript {
+    repositories {
+        jcenter()
+        maven { url = "http://files.minecraftforge.net/maven" }
+        maven { url = "https://oss.sonatype.org/content/repositories/snapshots/" }
+    }
+    dependencies {
+        classpath 'net.minecraftforge.gradle:ForgeGradle:2.3-SNAPSHOT'
+    }
+}
+
+apply plugin: 'net.minecraftforge.gradle.forge'
+apply plugin: 'idea'
+apply plugin: 'java'
+
+sourceCompatibility = JavaVersion.VERSION_1_8
+targetCompatibility = JavaVersion.VERSION_1_8
+
+file "build.properties" withReader {
+    def prop = new Properties()
+    prop.load(it)
+    ext.config = new ConfigSlurper().parse prop
+}
+
+version = config.mod.version
+group = config.mod.group
+archivesBaseName = config.mod.name
+
+ext.simpleVersion = version
+version = "${config.minecraft.version}-${project.version}"
+
+minecraft {
+    version = "${config.minecraft.version}-${config.forge.version}"
+    runDir = "run"
+    mappings = config.minecraft.mappings
+    replace "@VERSION@", config.mod.version
+    replace "@MODID@", config.mod.name
+    replace "@MCVERSION@", config.minecraft.version
+    replace "@FVERSION@", config.forge.version
+}
+
+repositories {
+    maven { url = "https://minecraft.curseforge.com/api/maven/" }
+}
+
+configurations {
+    embedded
+    compile.extendsFrom provided, embedded
+}
+
+dependencies {
+    compile "opencomputers:OpenComputers:MC${config.minecraft.version}:${config.opencomputers.version}"
+    compile "gregtechce:gregtech:${config.minecraft.version}:${config.gregtechce.version}"
+}
+
+processResources {
+    inputs.property "version", project.simpleVersion
+    inputs.property "mcversion", project.minecraft.version
+    inputs.property "fversion", config.forge.version
+
+    from(sourceSets.main.resources.srcDirs) {
+        include 'mcmod.info'
+        expand 'version':project.simpleVersion, 'mcversion':project.minecraft.version, 'fversion':config.forge.version
+    }
+
+    from(sourceSets.main.resources.srcDirs) {
+        exclude 'mcmod.info'
+    }
+
+    // Move access transformer to META-INF
+    rename '(.+_at.cfg)', 'META-INF/$1'
+}
+
+jar {
+    /*
+    from(zipTree(configurations.compile.files(configurations.compile.dependencies.find({ it.name == "OpenComputers" })).first())) {
+        include 'li/cil/oc/common/tileentity/traits/PowerAcceptor*'
+        include 'li/cil/oc/common/block/traits/PowerAcceptor*'
+    }
+    */
+
+    configurations.embedded.each { dep ->
+        from(project.zipTree(dep)) {
+            exclude 'META-INF', 'META-INF/**'
+        }
+    }
+    manifest {
+        attributes FMLCorePlugin: "org.eientei.gtce2oc.GTCE2OC"
+        attributes FMLAT: "gtce2oc_at.cfg"
+    }
+}
