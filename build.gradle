@@ -3,15 +3,18 @@ buildscript {
         jcenter()
         maven { url = "http://files.minecraftforge.net/maven" }
         maven { url = "https://oss.sonatype.org/content/repositories/snapshots/" }
+        maven { url = "https://plugins.gradle.org/m2/" }
     }
     dependencies {
-        classpath 'net.minecraftforge.gradle:ForgeGradle:2.3-SNAPSHOT'
+        classpath "net.minecraftforge.gradle:ForgeGradle:2.3-SNAPSHOT"
+        classpath "gradle.plugin.com.matthewprenger:CurseGradle:1.1.0"
     }
 }
 
-apply plugin: 'net.minecraftforge.gradle.forge'
-apply plugin: 'idea'
-apply plugin: 'java'
+apply plugin: "com.matthewprenger.cursegradle"
+apply plugin: "net.minecraftforge.gradle.forge"
+apply plugin: "idea"
+apply plugin: "java"
 
 sourceCompatibility = JavaVersion.VERSION_1_8
 targetCompatibility = JavaVersion.VERSION_1_8
@@ -20,6 +23,17 @@ file "build.properties" withReader {
     def prop = new Properties()
     prop.load(it)
     ext.config = new ConfigSlurper().parse prop
+}
+
+if (file("curse.properties").exists()) {
+    file "curse.properties" withReader {
+        def prop = new Properties()
+        prop.load(it)
+        ext.curse = new ConfigSlurper().parse prop
+    }
+} else {
+    ext.curse = new Properties()
+    ext.curse.key = ''
 }
 
 version = config.mod.version
@@ -33,10 +47,14 @@ minecraft {
     version = "${config.minecraft.version}-${config.forge.version}"
     runDir = "run"
     mappings = config.minecraft.mappings
-    replace "@VERSION@", config.mod.version
-    replace "@MODID@", config.mod.name
     replace "@MCVERSION@", config.minecraft.version
     replace "@FVERSION@", config.forge.version
+    replace "@MODID@", config.mod.id
+    replace "@MODNAME@", config.mod.name
+    replace "@MODDESC@", config.mod.desc
+    replace "@MODVERSION@", config.mod.version
+    replace "@MODAUTHOR@", config.mod.author
+    replace "@MODURL@", config.mod.url
 }
 
 repositories {
@@ -53,39 +71,72 @@ dependencies {
     compile "gregtechce:gregtech:${config.minecraft.version}:${config.gregtechce.version}"
 }
 
+extractRangemapReplacedMain {
+    sourceSets {
+        main {
+            java {
+                exclude "org/eientei/gtce2oc/reference"
+            }
+        }
+    }
+}
+
 processResources {
-    inputs.property "version", project.simpleVersion
-    inputs.property "mcversion", project.minecraft.version
+    inputs.property "id", config.mod.id
+    inputs.property "name", config.mod.name
+    inputs.property "desc", config.mod.desc
+    inputs.property "version", config.mod.version
+    inputs.property "author", config.mod.author
+    inputs.property "url", config.mod.url
+    inputs.property "mcversion", config.minecraft.version
     inputs.property "fversion", config.forge.version
 
     from(sourceSets.main.resources.srcDirs) {
         include 'mcmod.info'
-        expand 'version':project.simpleVersion, 'mcversion':project.minecraft.version, 'fversion':config.forge.version
+        expand  'id': config.mod.id,
+                'name': config.mod.name,
+                'desc': config.mod.desc,
+                'version': config.mod.version,
+                'author': config.mod.author,
+                'url': config.mod.url,
+                'mcversion': config.minecraft.version,
+                'fversion': config.forge.version
     }
 
     from(sourceSets.main.resources.srcDirs) {
         exclude 'mcmod.info'
     }
-
-    // Move access transformer to META-INF
-    rename '(.+_at.cfg)', 'META-INF/$1'
 }
 
 jar {
-    /*
-    from(zipTree(configurations.compile.files(configurations.compile.dependencies.find({ it.name == "OpenComputers" })).first())) {
-        include 'li/cil/oc/common/tileentity/traits/PowerAcceptor*'
-        include 'li/cil/oc/common/block/traits/PowerAcceptor*'
-    }
-    */
-
-    configurations.embedded.each { dep ->
-        from(project.zipTree(dep)) {
-            exclude 'META-INF', 'META-INF/**'
-        }
-    }
+    exclude "org/eientei/gtce2oc/reference"
     manifest {
         attributes FMLCorePlugin: "org.eientei.gtce2oc.GTCE2OC"
-        attributes FMLAT: "gtce2oc_at.cfg"
+    }
+}
+
+def getGitComment = { ->
+    def stdout = new ByteArrayOutputStream()
+    exec {
+        commandLine 'git', 'show', '-s', '--format=%B', 'HEAD'
+        standardOutput = stdout
+    }
+    return stdout.toString().trim()
+}
+
+curseforge {
+    apiKey = curse.key
+    project {
+        id = config.curse.id
+        changelog = getGitComment
+        releaseType = "release"
+        addGameVersion config.minecraft.version
+
+        mainArtifact(jar) {
+            relations {
+                requiredDependency "gregtechce"
+                requiredDependency "opencomputers"
+            }
+        }
     }
 }

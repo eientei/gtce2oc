@@ -1,31 +1,29 @@
 package org.eientei.gtce2oc;
 
 import net.minecraftforge.fml.relauncher.IFMLLoadingPlugin;
-import net.minecraftforge.fml.relauncher.IFMLLoadingPlugin.DependsOn;
-import net.minecraftforge.fml.relauncher.IFMLLoadingPlugin.MCVersion;
-import net.minecraftforge.fml.relauncher.IFMLLoadingPlugin.Name;
-import net.minecraftforge.fml.relauncher.IFMLLoadingPlugin.TransformerExclusions;
+import net.minecraftforge.fml.relauncher.IFMLLoadingPlugin.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.util.ASMifier;
-import org.objectweb.asm.util.TraceClassVisitor;
 
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.util.HashMap;
 import java.util.Map;
 
 @Name(GTCE2OC.MODID)
 @MCVersion(GTCE2OC.MCVERSION)
+@SortingIndex(2002)
 @DependsOn({"OpenComputers", "gregtech"})
 @TransformerExclusions("org.eientei.gtce2oc")
 public class GTCE2OC implements IFMLLoadingPlugin {
-    public static final String VERSION = "@VERSION@";
     public static final String MODID = "@MODID@";
     public static final String MCVERSION = "@MCVERSION@";
 
     public static final Logger logger = LogManager.getLogger(MODID);
+
+    public static final String POWER_CONVERTER = "PowerConverter";
+    public static final String POWER_DISTRIBUTOR = "PowerDistributor";
+    public static final String OTHERS = "Other";
+
+    public static final Map<String,MachineConfig> CONFIG = new HashMap<>();
 
     @Override
     public String[] getASMTransformerClass() {
@@ -34,7 +32,7 @@ public class GTCE2OC implements IFMLLoadingPlugin {
 
     @Override
     public String getModContainerClass() {
-        return null;
+        return "org.eientei.gtce2oc.GTCE2OCModContainer";
     }
 
     @Override
@@ -49,10 +47,5 @@ public class GTCE2OC implements IFMLLoadingPlugin {
     @Override
     public String getAccessTransformerClass() {
         return null;
-    }
-
-    public static void main(String[] args) throws IOException {
-        ClassReader cr = new ClassReader(new FileInputStream(args[0]));
-        cr.accept(new TraceClassVisitor(null, new ASMifier(), new PrintWriter(System.out)), ClassReader.SKIP_DEBUG);
     }
 }
