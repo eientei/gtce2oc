@@ -37,7 +37,7 @@ public class MachineConfig {
     public MachineConfig(Configuration config, String category, int defaultVoltage, int defaultAmperage, EnumFacing[] defaultInputs, EnumFacing[] defaultOutputs) {
         inputs = GET_SIDES(config, category, "inputs", defaultInputs);
         outputs = GET_SIDES(config, category, "outputs", defaultOutputs);
-        inputAmperage = config.getInt("input_amperage", category, defaultAmperage, 0, Integer.MAX_VALUE, "Amperage " + category + " will accept as input without blowing");
+        inputAmperage = config.getInt("input_amperage", category, defaultAmperage, 0, Integer.MAX_VALUE, "Amperage " + category + " will accept as input in one tick");
         outputAmperage = config.getInt("output_amperage", category, defaultAmperage, 0, Integer.MAX_VALUE, "Amperage " + category + " will emmit if stored enough energy");
         inputVoltage = config.getInt("input_voltage", category, defaultVoltage, 0, Integer.MAX_VALUE, "Voltage " + category + " will accept as input without blowing");
         outputVoltage = config.getInt("output_voltage", category, defaultVoltage, 0, Integer.MAX_VALUE, "Voltage " + category + " will emmit if stored enough energy");

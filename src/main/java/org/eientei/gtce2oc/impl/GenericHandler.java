@@ -13,12 +13,12 @@ import scala.Option;
 
 import javax.annotation.Nullable;
 import java.math.BigInteger;
-import java.util.HashSet;
-import java.util.Set;
 
 import static org.eientei.gtce2oc.GTCE2OC.*;
 
 public class GenericHandler  {
+    private static ThreadLocal<Connector[]> connectorset = ThreadLocal.withInitial(() -> new Connector[EnumFacing.values().length]);
+
     public static MachineConfig getConfig(PowerAcceptor that) {
         if (that instanceof PowerConverter) {
             return CONFIG.get(POWER_CONVERTER);
@@ -71,6 +71,9 @@ public class GenericHandler  {
 
         EnumFacing[] sides = energy < 0 ? getConfig(that).getOutputs() : getConfig(that).getInputs();
         for (Connector conn : connectors(that, sides)) {
+            if (conn == null) {
+                break;
+            }
             unused = conn.changeBuffer(unused);
         }
 
@@ -85,16 +88,26 @@ public class GenericHandler  {
         return getEnergyCapacity(that) - getEnergyStored(that);
     }
 
-    public static Set<Connector> connectors(PowerAcceptor that, EnumFacing[] sides) {
-        Set<Connector> set = new HashSet<>();
-        for (EnumFacing side : sides) {
+    public static Connector[] connectors(PowerAcceptor that, EnumFacing[] sides) {
+        Connector[] set = connectorset.get();
+        for (int i = 0; i < EnumFacing.values().length; i++) {
+            set[i] = null;
+        }
+
+        int ptr = 0;
+        loop: for (EnumFacing side : sides) {
             if (that.canConnectPower(side)) {
                 Option<Connector> connopt = that.connector(side);
                 if(connopt.isEmpty()) {
                     continue;
                 }
                 Connector conn = connopt.get();
-                set.add(conn);
+                for (int i = 0; i < ptr; i++) {
+                    if (set[i].equals(conn)) {
+                        continue loop;
+                    }
+                }
+                set[ptr++] = conn;
             }
         }
         return set;
@@ -103,6 +116,9 @@ public class GenericHandler  {
     public static long getEnergyStored(PowerAcceptor that) {
         double amount = 0;
         for (Connector conn : connectors(that, getConfig(that).getInputs())) {
+            if (conn == null) {
+                break;
+            }
             amount += conn.localBuffer();
         }
         return (long) Power.toEU(amount);
@@ -111,6 +127,9 @@ public class GenericHandler  {
     public static long getEnergyCapacity(PowerAcceptor that) {
         double amount = 0;
         for (Connector conn : connectors(that, getConfig(that).getInputs())) {
+            if (conn == null) {
+                break;
+            }
             amount += conn.localBufferSize();
         }
         return (long) Power.toEU(amount);
