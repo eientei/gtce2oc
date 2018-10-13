@@ -81,7 +81,7 @@ public class GTCE2OCModContainer extends DummyModContainer {
         RecipeIntegration.registerRecipeHandlers();
         File recipesConfig = new File(new File(Loader.instance().getConfigDir(), "opencomputers"), "gregtechce.recipes");
         if (!recipesConfig.exists()) {
-            if (!recipesConfig.getParentFile().mkdirs()) {
+            if (!recipesConfig.getParentFile().exists() && !recipesConfig.getParentFile().mkdirs()) {
                 throw new Exception("Could not create missing parent directory");
             }
             logger.info("Placing gregtechce.recipes into opencomputers directory");
