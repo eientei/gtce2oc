@@ -18,7 +18,6 @@ import org.eientei.gtce2oc.driver.RecipeIntegration;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 
@@ -57,7 +56,7 @@ public class GTCE2OCModContainer extends DummyModContainer {
     }
 
     @Subscribe
-    public void load(FMLPreInitializationEvent evt) throws IllegalAccessException, IOException {
+    public void load(FMLPreInitializationEvent evt) throws Exception {
         logger.info("loading configuration");
         Configuration config = new Configuration(new File(Loader.instance().getConfigDir(), "gtce2oc.cfg"));
         config.load();
@@ -82,6 +81,9 @@ public class GTCE2OCModContainer extends DummyModContainer {
         RecipeIntegration.registerRecipeHandlers();
         File recipesConfig = new File(new File(Loader.instance().getConfigDir(), "opencomputers"), "gregtechce.recipes");
         if (!recipesConfig.exists()) {
+            if (!recipesConfig.getParentFile().mkdirs()) {
+                throw new Exception("Could not create missing parent directory");
+            }
             logger.info("Placing gregtechce.recipes into opencomputers directory");
             InputStream recipes = getClass().getClassLoader().getResourceAsStream("gregtechce.recipes");
             FileOutputStream fos = new FileOutputStream(recipesConfig);
