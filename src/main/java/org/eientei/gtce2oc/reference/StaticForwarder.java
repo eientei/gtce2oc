@@ -8,7 +8,6 @@ import net.minecraftforge.common.capabilities.Capability;
 import org.eientei.gtce2oc.impl.GenericHandler;
 
 import javax.annotation.Nullable;
-import java.math.BigInteger;
 
 public class StaticForwarder extends PowerConverter implements IEnergyContainer, ITickable {
 
@@ -28,13 +27,18 @@ public class StaticForwarder extends PowerConverter implements IEnergyContainer,
     }
 
     @Override
+    public long changeEnergy(long energy) {
+        return GenericHandler.changeEnergy(this, energy);
+    }
+
+    @Override
     public long addEnergy(long energy) {
         return GenericHandler.addEnergy(this, energy);
     }
 
     @Override
-    public boolean canUse(long energy) {
-        return GenericHandler.canUse(this, energy);
+    public long removeEnergy(long energyToRemove) {
+        return GenericHandler.removeEnergy(this, energyToRemove);
     }
 
     @Override
@@ -50,16 +54,6 @@ public class StaticForwarder extends PowerConverter implements IEnergyContainer,
     @Override
     public long getEnergyCapacity() {
         return GenericHandler.getEnergyCapacity(this);
-    }
-
-    @Override
-    public BigInteger getEnergyStoredActual() {
-        return GenericHandler.getEnergyStoredActual(this);
-    }
-
-    @Override
-    public BigInteger getEnergyCapacityActual() {
-        return GenericHandler.getEnergyCapacityActual(this);
     }
 
     @Override
@@ -80,11 +74,6 @@ public class StaticForwarder extends PowerConverter implements IEnergyContainer,
     @Override
     public long getInputVoltage() {
         return GenericHandler.getInputVoltage(this);
-    }
-
-    @Override
-    public boolean isSummationOverflowSafe() {
-        return GenericHandler.isSummationOverflowSafe(this);
     }
 
     @Override

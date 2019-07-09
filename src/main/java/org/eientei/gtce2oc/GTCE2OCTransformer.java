@@ -25,7 +25,7 @@ public class GTCE2OCTransformer implements IClassTransformer {
     public static final String POWER_ACCEPTOR_TYPE = "Lli/cil/oc/common/tileentity/traits/PowerAcceptor;";
     public static final String POWER_BALANCER_TYPE = "Lli/cil/oc/common/tileentity/traits/PowerBalancer;";
 
-    public static final String MINECRAFT_ITICKABLE_UPDATE_METHOD = "func_73660_a";
+    public static final String MINECRAFT_ITICKABLE_UPDATE_METHOD = "update";
 
     public static final String MANGLE_PREFIX = "__gtce2oc__";
 
@@ -37,18 +37,15 @@ public class GTCE2OCTransformer implements IClassTransformer {
             "acceptEnergyFromNetwork",
             "inputsEnergy",
             "outputsEnergy",
+            "changeEnergy",
             "addEnergy",
-            "canUse",
-            "getEnergyCanBeInserted",
+            "removeEnergy",
             "getEnergyStored",
             "getEnergyCapacity",
-            "getEnergyStoredActual",
-            "getEnergyCapacityActual",
             "getOutputAmperage",
             "getOutputVoltage",
             "getInputAmperage",
             "getInputVoltage",
-            "isSummationOverflowSafe",
             "isOneProbeHidden",
             MINECRAFT_ITICKABLE_UPDATE_METHOD,
             "hasCapability",
@@ -154,6 +151,16 @@ public class GTCE2OCTransformer implements IClassTransformer {
             mv.visitEnd();
         }
         {
+            mv = cw.visitMethod(ACC_PUBLIC, "changeEnergy", "(J)J", null, null);
+            mv.visitCode();
+            mv.visitVarInsn(ALOAD, 0);
+            mv.visitVarInsn(LLOAD, 1);
+            mv.visitMethodInsn(INVOKESTATIC, handler, "changeEnergy", "(" + type + "J)J", false);
+            mv.visitInsn(LRETURN);
+            mv.visitMaxs(3, 3);
+            mv.visitEnd();
+        }
+        {
             mv = cw.visitMethod(ACC_PUBLIC, "addEnergy", "(J)J", null, null);
             mv.visitCode();
             mv.visitVarInsn(ALOAD, 0);
@@ -164,22 +171,13 @@ public class GTCE2OCTransformer implements IClassTransformer {
             mv.visitEnd();
         }
         {
-            mv = cw.visitMethod(ACC_PUBLIC, "canUse", "(J)Z", null, null);
+            mv = cw.visitMethod(ACC_PUBLIC, "removeEnergy", "(J)J", null, null);
             mv.visitCode();
             mv.visitVarInsn(ALOAD, 0);
             mv.visitVarInsn(LLOAD, 1);
-            mv.visitMethodInsn(INVOKESTATIC, handler, "canUse", "(" + type + "J)Z", false);
-            mv.visitInsn(IRETURN);
-            mv.visitMaxs(3, 3);
-            mv.visitEnd();
-        }
-        {
-            mv = cw.visitMethod(ACC_PUBLIC, "getEnergyCanBeInserted", "()J", null, null);
-            mv.visitCode();
-            mv.visitVarInsn(ALOAD, 0);
-            mv.visitMethodInsn(INVOKESTATIC, handler, "getEnergyCanBeInserted", "(" + type + ")J", false);
+            mv.visitMethodInsn(INVOKESTATIC, handler, "removeEnergy", "(" + type + "J)J", false);
             mv.visitInsn(LRETURN);
-            mv.visitMaxs(2, 1);
+            mv.visitMaxs(3, 3);
             mv.visitEnd();
         }
         {
@@ -198,24 +196,6 @@ public class GTCE2OCTransformer implements IClassTransformer {
             mv.visitMethodInsn(INVOKESTATIC, handler, "getEnergyCapacity", "(" + type + ")J", false);
             mv.visitInsn(LRETURN);
             mv.visitMaxs(2, 1);
-            mv.visitEnd();
-        }
-        {
-            mv = cw.visitMethod(ACC_PUBLIC, "getEnergyStoredActual", "()Ljava/math/BigInteger;", null, null);
-            mv.visitCode();
-            mv.visitVarInsn(ALOAD, 0);
-            mv.visitMethodInsn(INVOKESTATIC, handler, "getEnergyStoredActual", "(" + type + ")Ljava/math/BigInteger;", false);
-            mv.visitInsn(ARETURN);
-            mv.visitMaxs(1, 1);
-            mv.visitEnd();
-        }
-        {
-            mv = cw.visitMethod(ACC_PUBLIC, "getEnergyCapacityActual", "()Ljava/math/BigInteger;", null, null);
-            mv.visitCode();
-            mv.visitVarInsn(ALOAD, 0);
-            mv.visitMethodInsn(INVOKESTATIC, handler, "getEnergyCapacityActual", "(" + type + ")Ljava/math/BigInteger;", false);
-            mv.visitInsn(ARETURN);
-            mv.visitMaxs(1, 1);
             mv.visitEnd();
         }
         {
@@ -252,15 +232,6 @@ public class GTCE2OCTransformer implements IClassTransformer {
             mv.visitMethodInsn(INVOKESTATIC, handler, "getInputVoltage", "(" + type + ")J", false);
             mv.visitInsn(LRETURN);
             mv.visitMaxs(2, 1);
-            mv.visitEnd();
-        }
-        {
-            mv = cw.visitMethod(ACC_PUBLIC, "isSummationOverflowSafe", "()Z", null, null);
-            mv.visitCode();
-            mv.visitVarInsn(ALOAD, 0);
-            mv.visitMethodInsn(INVOKESTATIC, handler, "isSummationOverflowSafe", "(" + type + ")Z", false);
-            mv.visitInsn(IRETURN);
-            mv.visitMaxs(1, 1);
             mv.visitEnd();
         }
         {

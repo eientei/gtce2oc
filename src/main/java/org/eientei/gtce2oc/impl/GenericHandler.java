@@ -26,6 +26,14 @@ public class GenericHandler  {
         return CONFIG.get(OTHERS);
     }
 
+    public static long addEnergy(PowerAcceptor that, long energy) {
+        return changeEnergy(that, energy);
+    }
+
+    public static long removeEnergy(PowerAcceptor that, long energy) {
+        return changeEnergy(that, -energy) * -1;
+    }
+
     public static long acceptEnergyFromNetwork(PowerAcceptor that, EnumFacing inputSide, long voltage, long amperage) {
         if (!inputsEnergy(that, inputSide)) {
             return 0;
@@ -63,7 +71,7 @@ public class GenericHandler  {
         return false;
     }
 
-    public static long addEnergy(PowerAcceptor that, long energy) {
+    public static long changeEnergy(PowerAcceptor that, long energy) {
         if (energy == 0) {
             return 0;
         }

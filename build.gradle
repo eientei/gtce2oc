@@ -46,6 +46,7 @@ version = "${config.minecraft.version}-${project.version}"
 minecraft {
     version = "${config.minecraft.version}-${config.forge.version}"
     runDir = "run"
+    useDepAts = true
     mappings = config.minecraft.mappings
     replace "@MCVERSION@", config.minecraft.version
     replace "@FVERSION@", config.forge.version
@@ -69,6 +70,9 @@ configurations {
 dependencies {
     compile "opencomputers:OpenComputers:MC${config.minecraft.version}:${config.opencomputers.version}"
     compile "gregtechce:gregtech:${config.minecraft.version}:${config.gregtechce.version}"
+    provided ("appeng:appliedenergistics2:${config.ae2.version}:api") {
+        transitive = false
+    }
 }
 
 extractRangemapReplacedMain {

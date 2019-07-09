@@ -54,7 +54,7 @@ public class DriverEnergyContainer extends DriverSidedTileEntity {
 
         public Environment(IEnergyContainer tileEntity, MetaTileEntityHolder holder) {
             this(tileEntity);
-            preferredName = holder.getMetaTileEntity().metaTileEntityId;
+            preferredName = holder.getMetaTileEntity().metaTileEntityId.getPath();
         }
 
         @Callback(doc = "function():number --  Returns the amount of electricity contained in this Block, in EU units!")
