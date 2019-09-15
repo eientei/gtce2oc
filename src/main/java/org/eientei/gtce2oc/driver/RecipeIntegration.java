@@ -3,29 +3,27 @@ package org.eientei.gtce2oc.driver;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigValue;
 import gregtech.api.items.metaitem.MetaItem;
+import gregtech.api.recipes.Recipe;
+import gregtech.api.recipes.RecipeBuilder;
 import gregtech.api.recipes.RecipeMap;
 import gregtech.api.recipes.RecipeMaps;
-import li.cil.oc.common.recipe.ExtendedShapedOreRecipe;
-import li.cil.oc.common.recipe.ExtendedShapelessOreRecipe;
 import li.cil.oc.common.recipe.Recipes;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.FurnaceRecipes;
-import net.minecraft.util.NonNullList;
-import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fml.common.registry.GameRegistry;
 import net.minecraftforge.oredict.OreDictionary;
 import net.minecraftforge.oredict.ShapedOreRecipe;
 import net.minecraftforge.oredict.ShapelessOreRecipe;
 import net.minecraftforge.registries.GameData;
-import scala.Char;
 import scala.Function2;
 import scala.Option;
 import scala.runtime.AbstractFunction2;
 import scala.runtime.BoxedUnit;
 
 import java.lang.reflect.Field;
+import java.rmi.Naming;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -44,11 +42,19 @@ public class RecipeIntegration {
 
         @Override
         public BoxedUnit apply(ItemStack output, Config recipe) {
-            //handler.accept(parseRecipe(output, recipe));
+            handler.accept(parseRecipe(output, recipe));
             return BoxedUnit.UNIT;
         }
     }
 
+    public static String nameItem(Object o) {
+        if (o instanceof ItemStack) {
+            return ((ItemStack) o).getDisplayName();
+        } else if (o instanceof FluidStack) {
+            return ((FluidStack) o).getLocalizedName();
+        }
+        return "???";
+    }
 
     public static void namedList(StringBuilder p, List list) {
         p.append("[");
@@ -58,9 +64,14 @@ public class RecipeIntegration {
                 p.append(", ");
             }
             if (o instanceof ItemStack) {
-                p.append(((ItemStack) o).getDisplayName());
+                p.append(nameItem(o));
             } else if (o instanceof FluidStack) {
-                p.append(((FluidStack) o).getLocalizedName());
+                p.append(nameItem(o));
+            } else if (o instanceof ChancedOutput) {
+                ItemStack item = ((ChancedOutput) o).getItem();
+                String chance = Recipe.formatChanceValue(((ChancedOutput) o).getChance());
+                String boost = Recipe.formatChanceValue(((ChancedOutput) o).getBoost());
+                p.append(String.format("(%s+(%s*T))%% of %s", chance, boost, nameItem(item)));
             }
             first = false;
         }
@@ -125,19 +136,29 @@ public class RecipeIntegration {
                     namedList(p, parsed.getOutputFluids());
                     p.append(" fluid outputs");
                 }
+                if (!parsed.getChancedOutputs().isEmpty()) {
+                    if (p.length() > 0) {
+                        p.append(", ");
+                    }
+                    namedList(p, parsed.getChancedOutputs());
+                    p.append(" chanced outputs");
+                }
                 p.append(" requiring ")
                         .append(parsed.getEu()).append(" EUs and taking ")
                         .append(parsed.getDuration()).append(" ticks");
 
                 logger.info("Registering recipe for handler {} with {}", sb.toString(), p.toString());
-                entry.recipeBuilder()
+                RecipeBuilder builder = entry.recipeBuilder()
                         .duration(parsed.getDuration())
                         .EUt(parsed.getEu())
                         .inputs(parsed.getInputs())
                         .fluidInputs(parsed.getInputFluids())
                         .outputs(parsed.getOutputs())
-                        .fluidOutputs(parsed.getOutputFluids())
-                        .buildAndRegister();
+                        .fluidOutputs(parsed.getOutputFluids());
+                for (ChancedOutput co : parsed.getChancedOutputs()) {
+                    builder = builder.chancedOutput(co.getItem(), co.getChance(), co.getBoost());
+                }
+                builder.buildAndRegister();
             }));
         }
 
@@ -214,158 +235,29 @@ public class RecipeIntegration {
         });
     }
 
-    /*
-    public static class HandlerWrapper extends AbstractFunction2<ItemStack, Config, BoxedUnit> {
-        private Consumer<ParsedRecipe> handler;
-
-        public HandlerWrapper(Consumer<ParsedRecipe> handler) {
-            this.handler = handler;
+    public static void setCount(List<ItemStack> stacks, List<Integer> counts, int i) {
+        ItemStack stack = stacks.get(i);
+        if (stack == null) {
+            return;
         }
-
-        @Override
-        public BoxedUnit apply(ItemStack output, Config recipe) {
-            handler.accept(parseRecipe(output, recipe));
-            return BoxedUnit.UNIT;
+        int count = counts.get(i);
+        if (count <= 0) {
+            return;
         }
-    }
-
-    public static void namedList(StringBuilder p, List list) {
-        p.append("[");
-        boolean first = true;
-        for (Object o : list) {
-            if (!first) {
-                p.append(", ");
-            }
-            if (o instanceof ItemStack) {
-                p.append(((ItemStack) o).getDisplayName());
-            } else if (o instanceof FluidStack) {
-                p.append(((FluidStack) o).getLocalizedName());
-            }
-            first = false;
-        }
-        p.append("]");
-    }
-
-    public static void registerRecipeHandlers() throws IllegalAccessException {
-        for (Field field : RecipeMaps.class.getDeclaredFields()) {
-            if (!field.getType().equals(RecipeMap.class)) {
-                continue;
-            }
-            if (!field.getName().endsWith("_RECIPES")) {
-                continue;
-            }
-
-            String rawName = field.getName().replace("_RECIPES", "");
-            StringBuilder sb = new StringBuilder();
-            sb.append("gtce_");
-            int[] codepoints = rawName.codePoints().toArray();
-            for (int i = 0; i < codepoints.length; i++) {
-                int c = codepoints[i];
-                if (c == '_') {
-                    continue;
-                }
-
-                if (i > 0 && codepoints[i-1] == '_') {
-                    sb.appendCodePoint(c);
-                } else {
-                    sb.appendCodePoint(Character.toLowerCase(c));
-                }
-            }
-
-            logger.info("Registering recipe handler {}", sb.toString());
-            RecipeMap entry = (RecipeMap) field.get(null);
-            Recipes.registerRecipeHandler(sb.toString(), new HandlerWrapper(parsed -> {
-                StringBuilder p = new StringBuilder();
-                if (!parsed.getInputs().isEmpty()) {
-                    if (p.length() > 0) {
-                        p.append(", ");
-                    }
-                    namedList(p, parsed.getInputs());
-                    p.append(" inputs");
-                }
-                if (!parsed.getOutputs().isEmpty()) {
-                    if (p.length() > 0) {
-                        p.append(", ");
-                    }
-                    namedList(p, parsed.getOutputs());
-                    p.append(" outputs");
-                }
-                if (!parsed.getInputFluids().isEmpty()) {
-                    if (p.length() > 0) {
-                        p.append(", ");
-                    }
-                    namedList(p, parsed.getInputFluids());
-                    p.append(" fluid inputs");
-                }
-                if (!parsed.getOutputFluids().isEmpty()) {
-                    if (p.length() > 0) {
-                        p.append(", ");
-                    }
-                    namedList(p, parsed.getOutputFluids());
-                    p.append(" fluid outputs");
-                }
-                p.append(" requiring ")
-                        .append(parsed.getEu()).append(" EUs and taking ")
-                        .append(parsed.getDuration()).append(" ticks");
-
-                logger.info("Registering recipe for handler {} with {}", sb.toString(), p.toString());
-                entry.recipeBuilder()
-                        .duration(parsed.getDuration())
-                        .EUt(parsed.getEu())
-                        .inputs(parsed.getInputs())
-                        .fluidInputs(parsed.getInputFluids())
-                        .outputs(parsed.getOutputs())
-                        .fluidOutputs(parsed.getOutputFluids())
-                        .buildAndRegister();
-            }));
-        }
-
-
-        Recipes.registerRecipeHandler("gtce_multiple", new HandlerWrapper(null) {
-            @Override
-            public BoxedUnit apply(ItemStack output, Config recipe) {
-                List<? extends Config> alternatives = recipe.getConfigList("alternatives");
-                for (Config altconf : alternatives) {
-                    String type = "shaped";
-                    if (altconf.hasPath("type")) {
-                        type = altconf.getString("type");
-                    }
-                    Option<Function2<ItemStack, Config, BoxedUnit>> func = Recipes.recipeHandlers().get(type);
-                    if (func.isDefined()) {
-                        logger.info("Registering recipe alternative for handler {} and output {}", type, output.getDisplayName());
-                        func.get().apply(output, altconf);
-                    }
-                }
-                return BoxedUnit.UNIT;
-            }
-        });
+        stack.setCount(Math.min(stack.getMaxStackSize(), count));
     }
 
     public static ParsedRecipe parseRecipe(ItemStack primaryOutput, Config recipe) {
         List<ItemStack> inputs = parseIngredientList(recipe.getValue("input"));
         primaryOutput.setCount(Recipes.tryGetCount(recipe));
-        if (inputs.size() < 1 || inputs.size() > 2) {
-            throw new Recipes.RecipeException("Invalid recipe length: " + inputs.size() + ", should be 1 or 2.");
-        }
         List<Integer> inputCount = recipe.getIntList("count");
         if (inputCount.size() != inputs.size()) {
             throw new Recipes.RecipeException("Mismatched ingredient count: " + inputs.size() + " != " + inputCount.size() + ".");
         }
         for (int i = 0; i < inputs.size(); i++) {
-            ItemStack input = inputs.get(i);
-            if (input == null) {
-                continue;
-            }
-            int count = inputCount.get(i);
-            if (count <= 0) {
-                continue;
-            }
-            input.setCount(Math.min(input.getMaxStackSize(), count));
+            setCount(inputs, inputCount, i);
         }
-
         List<ItemStack> outputs = new ArrayList<>();
-        outputs.add(primaryOutput);
-
         if (recipe.hasPath("secondaryOutput")) {
             List<ItemStack> secondaryOutputs = parseIngredientList(recipe.getValue("secondaryOutput"));
             List<Integer> secondaryOutputCount = recipe.getIntList("secondaryOutputCount");
@@ -373,16 +265,36 @@ public class RecipeIntegration {
                 throw new Recipes.RecipeException("Mismatched secoundary output count: " + secondaryOutputs.size() + " != " + secondaryOutputCount.size() + ".");
             }
             for (int i = 0; i < secondaryOutputs.size(); i++) {
-                ItemStack secondaryOutput = secondaryOutputs.get(i);
-                if (secondaryOutput == null) {
-                    continue;
+                setCount(secondaryOutputs, secondaryOutputCount, i);
+            }
+            outputs.addAll(secondaryOutputs);
+        }
+        outputs.add(0, primaryOutput);
+
+        List<ChancedOutput> chancedOutputs = new ArrayList<>();
+        if (recipe.hasPath("chancedOutput")) {
+            Object unwrapped = recipe.getValue("chancedOutput").unwrapped();
+            if (unwrapped instanceof Collection) {
+                for (Object ing : (Collection)unwrapped) {
+                    if (!(ing instanceof HashMap)) {
+                        throw new Recipes.RecipeException("Invalid chanced output definition" + ing);
+                    }
+                    Object item = ((HashMap) ing).get("item");
+                    List<ItemStack> stacks = transformIngredient(item);
+                    if (stacks.isEmpty()) {
+                        throw new Recipes.RecipeException("Invalid chanced output definition for item " + ing);
+                    }
+                    ItemStack chancedStack = stacks.get(0);
+                    Object chance = ((HashMap) ing).get("chance");
+                    if (!(chance instanceof Number)) {
+                        throw new Recipes.RecipeException("Invalid chanced output definition for chance " + ing);
+                    }
+                    Object boost = ((HashMap) ing).get("boost");
+                    if (!(boost instanceof Number)) {
+                        throw new Recipes.RecipeException("Invalid chanced output definition for boost " + ing);
+                    }
+                    chancedOutputs.add(new ChancedOutput(chancedStack, ((Number) chance).intValue(), ((Number) boost).intValue()));
                 }
-                int count = secondaryOutputCount.get(i);
-                if (count <= 0) {
-                    continue;
-                }
-                secondaryOutput.setCount(Math.min(secondaryOutput.getMaxStackSize(), count));
-                outputs.add(secondaryOutput);
             }
         }
 
@@ -405,76 +317,57 @@ public class RecipeIntegration {
         int eu = recipe.getInt("eu");
         int duration = recipe.getInt("duration");
 
-        return new ParsedRecipe(inputs, inputFluids, outputFluids, outputs, eu, duration);
+        return new ParsedRecipe(inputs, inputFluids, outputFluids, outputs, chancedOutputs, eu, duration);
+    }
+
+    public static List<ItemStack> transformStack(String ref) {
+        Object ing = Recipes.parseIngredient(ref);
+        if (ing instanceof ItemStack) {
+            return Collections.singletonList(((ItemStack) ing).copy());
+        }
+        return OreDictionary.getOres(ref);
     }
 
     public static List<ItemStack> transformIngredient(Object ing) {
-        if (ing instanceof ItemStack) {
-            return Collections.singletonList(((ItemStack) ing).copy());
-        } else if (ing instanceof String) {
-            List<ItemStack> out = new ArrayList<>();
+        if (ing instanceof String) {
             String ref = ing.toString();
-            String gtref = "";
-            NonNullList<ItemStack> ores = NonNullList.create();
-            Recipes.RecipeException orig = null;
-            try {
-                ores = OreDictionary.getOres(ref);
-            } catch (Recipes.RecipeException e) {
-                orig = e;
+            for (ItemStack o : transformStack(ref)) {
+                return Collections.singletonList(o.copy());
             }
-            if (ores.isEmpty() && ref.contains("#")) {
-                String[] parts = ref.split("#", 2);
-                try {
-                    ores = OreDictionary.getOres(parts[0]);
-                } catch (Recipes.RecipeException e) {
-                    if (orig == null) {
-                        orig = e;
+        } else if (ing instanceof ItemStack) {
+            return Collections.singletonList(((ItemStack) ing).copy());
+        } else if (ing instanceof Map) {
+            Map m = (Map) ing;
+            Object oreDict = m.get("oreDict");
+            Object gtid = m.get("gtid");
+            if (!(oreDict instanceof String) || !(gtid instanceof String)) {
+                throw new Recipes.RecipeException("Invalid ingredient type: " + ing.getClass().getName() + " @ " + ing);
+            }
+            List<ItemStack> ores = transformStack((String) oreDict);
+            for (ItemStack o : ores) {
+                if (o.getItem() instanceof MetaItem) {
+                    MetaItem.MetaValueItem item = ((MetaItem) o.getItem()).getItem(o);
+                    if (gtid.equals(item.unlocalizedName)) {
+                        return Collections.singletonList(o.copy());
                     }
                 }
-                gtref = parts[1];
             }
-            if (ores.isEmpty() && orig != null) {
-                throw orig;
-            }
-
-            if (ores.size() > 1) {
-                for (ItemStack o : ores) {
-                    if (o.getItem() instanceof MetaItem) {
-                        MetaItem.MetaValueItem item = ((MetaItem) o.getItem()).getItem(o);
-                        if (gtref.equals(item.unlocalizedName)) {
-                            out.add(o.copy());
-                            return out;
-                        }
-                        continue;
-                    }
-                    out.add(o.copy());
-                }
-            } else {
-                out.add(ores.get(0).copy());
-            }
-            return out;
         } else if (ing == null) {
             return Collections.emptyList();
-        } else {
-            throw new Recipes.RecipeException("Invalid ingredient type: " + ing.getClass().getName());
         }
+        throw new Recipes.RecipeException("Invalid ingredient type: " + ing.getClass().getName() + " @ " + ing);
     }
 
-    public static List<ItemStack> parseIngredientList(ConfigValue list) {
-        Object unwrapped = list.unwrapped();
+    private static List<ItemStack> parseIngredientList(ConfigValue input) {
+        Object unwrapped = input.unwrapped();
         List<ItemStack> ingredients = new ArrayList<>();
-        if (unwrapped instanceof List) {
-            for (Object ing : (List)unwrapped) {
-                if (ing instanceof String && ((String) ing).contains("#")) {
-                    ingredients.addAll(transformIngredient(ing));
-                } else {
-                    ingredients.addAll(transformIngredient(Recipes.parseIngredient(ing)));
-                }
+        if (unwrapped instanceof Collection) {
+            for (Object ing : (Collection)unwrapped) {
+                ingredients.addAll(transformIngredient(ing));
             }
         } else {
-            ingredients.addAll(transformIngredient(Recipes.parseIngredient(unwrapped)));
+            ingredients.addAll(transformIngredient(unwrapped));
         }
         return ingredients;
     }
-     */
 }

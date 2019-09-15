@@ -10,14 +10,16 @@ public class ParsedRecipe {
     private final List<FluidStack> inputFluids;
     private final List<FluidStack> outputFluids;
     private final List<ItemStack> outputs;
+    private final List<ChancedOutput> chancedOutputs;
     private final int eu;
     private final int duration;
 
-    public ParsedRecipe(List<ItemStack> inputs, List<FluidStack> inputFluids, List<FluidStack> outputFluids,  List<ItemStack> outputs, int eu, int duration) {
+    public ParsedRecipe(List<ItemStack> inputs, List<FluidStack> inputFluids, List<FluidStack> outputFluids,  List<ItemStack> outputs, List<ChancedOutput> chancedOutputs, int eu, int duration) {
         this.inputs = inputs;
         this.inputFluids = inputFluids;
         this.outputFluids = outputFluids;
         this.outputs = outputs;
+        this.chancedOutputs = chancedOutputs;
         this.eu = eu;
         this.duration = duration;
     }
@@ -39,6 +41,10 @@ public class ParsedRecipe {
 
     public List<ItemStack> getOutputs() {
         return outputs;
+    }
+
+    public List<ChancedOutput> getChancedOutputs() {
+        return chancedOutputs;
     }
 
     public int getEu() {
