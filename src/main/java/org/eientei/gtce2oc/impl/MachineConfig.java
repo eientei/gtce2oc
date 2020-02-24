@@ -1,4 +1,4 @@
-package org.eientei.gtce2oc;
+package org.eientei.gtce2oc.impl;
 
 import net.minecraft.util.EnumFacing;
 import net.minecraftforge.common.config.Configuration;

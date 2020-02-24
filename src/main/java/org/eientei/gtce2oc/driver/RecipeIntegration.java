@@ -21,16 +21,10 @@ import scala.runtime.AbstractFunction2;
 import scala.runtime.BoxedUnit;
 
 import java.lang.reflect.Field;
-import java.rmi.Naming;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Consumer;
 
-import static org.eientei.gtce2oc.GTCE2OC.logger;
+import static org.eientei.gtce2oc.GTCE2OC.LOGGER;
 
 public class RecipeIntegration {
     public static class HandlerWrapper extends AbstractFunction2<ItemStack, Config, BoxedUnit> {
@@ -104,7 +98,7 @@ public class RecipeIntegration {
                 }
             }
 
-            logger.info("Registering recipe handler {}", sb.toString());
+            LOGGER.info("Registering recipe handler {}", sb.toString());
             RecipeMap entry = (RecipeMap) field.get(null);
             Recipes.registerRecipeHandler(sb.toString(), new HandlerWrapper(parsed -> {
                 StringBuilder p = new StringBuilder();
@@ -147,7 +141,7 @@ public class RecipeIntegration {
                         .append(parsed.getEu()).append(" EUs and taking ")
                         .append(parsed.getDuration()).append(" ticks");
 
-                logger.info("Registering recipe for handler {} with {}", sb.toString(), p.toString());
+                LOGGER.info("Registering recipe for handler {} with {}", sb.toString(), p.toString());
                 RecipeBuilder builder = entry.recipeBuilder()
                         .duration(parsed.getDuration())
                         .EUt(parsed.getEu())
@@ -226,7 +220,7 @@ public class RecipeIntegration {
                     }
                     Option<Function2<ItemStack, Config, BoxedUnit>> func = Recipes.recipeHandlers().get(type);
                     if (func.isDefined()) {
-                        logger.info("Registering recipe alternative for handler {} and output {}", type, output.getDisplayName());
+                        LOGGER.info("Registering recipe alternative for handler {} and output {}", type, output.getDisplayName());
                         func.get().apply(output, altconf);
                     }
                 }
