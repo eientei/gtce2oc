@@ -3,10 +3,7 @@ package org.eientei.gtce2oc.driver;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigValue;
 import gregtech.api.items.metaitem.MetaItem;
-import gregtech.api.recipes.Recipe;
-import gregtech.api.recipes.RecipeBuilder;
-import gregtech.api.recipes.RecipeMap;
-import gregtech.api.recipes.RecipeMaps;
+import gregtech.api.recipes.*;
 import li.cil.oc.common.recipe.Recipes;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.FurnaceRecipes;
@@ -42,7 +39,24 @@ public class RecipeIntegration {
     }
 
     public static String nameItem(Object o) {
-        if (o instanceof ItemStack) {
+        if (o instanceof CountableIngredient) {
+            ItemStack[] stacks = ((CountableIngredient) o).getIngredient().getMatchingStacks();
+            if (stacks.length == 1) {
+                return stacks[0].getDisplayName();
+            }
+            StringBuilder p = new StringBuilder();
+            boolean first = true;
+            p.append("(");
+            for (ItemStack s : stacks) {
+                if (!first) {
+                    p.append(" | ");
+                }
+                p.append(nameItem(s));
+                first = false;
+            }
+            p.append(")");
+            return p.toString();
+        } else if (o instanceof ItemStack) {
             return ((ItemStack) o).getDisplayName();
         } else if (o instanceof FluidStack) {
             return ((FluidStack) o).getLocalizedName();
@@ -50,14 +64,16 @@ public class RecipeIntegration {
         return "???";
     }
 
-    public static void namedList(StringBuilder p, List list) {
+    public static void namedList(StringBuilder p, List<?> list) {
         p.append("[");
         boolean first = true;
         for (Object o : list) {
             if (!first) {
                 p.append(", ");
             }
-            if (o instanceof ItemStack) {
+            if (o instanceof CountableIngredient) {
+                p.append(nameItem(o));
+            } else if (o instanceof ItemStack) {
                 p.append(nameItem(o));
             } else if (o instanceof FluidStack) {
                 p.append(nameItem(o));
@@ -99,7 +115,7 @@ public class RecipeIntegration {
             }
 
             LOGGER.info("Registering recipe handler {}", sb.toString());
-            RecipeMap entry = (RecipeMap) field.get(null);
+            RecipeMap<?> entry = (RecipeMap<?>) field.get(null);
             Recipes.registerRecipeHandler(sb.toString(), new HandlerWrapper(parsed -> {
                 StringBuilder p = new StringBuilder();
                 if (!parsed.getInputs().isEmpty()) {
@@ -142,10 +158,10 @@ public class RecipeIntegration {
                         .append(parsed.getDuration()).append(" ticks");
 
                 LOGGER.info("Registering recipe for handler {} with {}", sb.toString(), p.toString());
-                RecipeBuilder builder = entry.recipeBuilder()
+                RecipeBuilder<?> builder = entry.recipeBuilder()
                         .duration(parsed.getDuration())
                         .EUt(parsed.getEu())
-                        .inputs(parsed.getInputs())
+                        .inputs(parsed.getInputs().toArray(new CountableIngredient[0]))
                         .fluidInputs(parsed.getInputFluids())
                         .outputs(parsed.getOutputs())
                         .fluidOutputs(parsed.getOutputFluids());
@@ -166,26 +182,26 @@ public class RecipeIntegration {
 
             ItemStack output = parsed.getOutputs().get(0);
 
-            Map<Character, ItemStack> ingredients = new HashMap<>();
+            Map<Character, Object> ingredients = new HashMap<>();
             List<Object> args = new ArrayList<>();
             boolean nonempty = false;
             for (int i = 0; i < 3; i++) {
                 StringBuilder sb = new StringBuilder();
                 for (int k = 0; k < 3; k++) {
                     int n = (i * 3) + k;
-                    ItemStack value = parsed.getInputs().get(n);
+                    CountableIngredient value = parsed.getInputs().get(n);
                     if (value == null) {
                         sb.append(' ');
-                    } else{
+                    } else {
                         char c = Character.toChars('a' + n)[0];
                         sb.append(c);
-                        ingredients.put(c, value);
+                        ingredients.put(c, value.getIngredient().getMatchingStacks());
                         nonempty = true;
                     }
                 }
                 args.add(sb.toString());
             }
-            for (Map.Entry<Character, ItemStack> e : ingredients.entrySet()) {
+            for (Map.Entry<Character, Object> e : ingredients.entrySet()) {
                 args.add(e.getKey());
                 args.add(e.getValue());
             }
@@ -204,9 +220,9 @@ public class RecipeIntegration {
 
         Recipes.registerRecipeHandler("furnace", new HandlerWrapper(parsed -> {
             ItemStack output = parsed.getOutputs().get(0);
-            ItemStack input = parsed.getInputs().get(0);
-
-            FurnaceRecipes.instance().addSmelting(input.getItem(), output, 0);
+            for (ItemStack i : parsed.getInputs().get(0).getIngredient().getMatchingStacks()) {
+                FurnaceRecipes.instance().addSmelting(i.getItem(), output, 0);
+            }
         }));
 
         Recipes.registerRecipeHandler("gtce_multiple", new HandlerWrapper(null) {
@@ -229,37 +245,39 @@ public class RecipeIntegration {
         });
     }
 
-    public static void setCount(List<ItemStack> stacks, List<Integer> counts, int i) {
-        ItemStack stack = stacks.get(i);
-        if (stack == null) {
-            return;
-        }
-        int count = counts.get(i);
-        if (count <= 0) {
-            return;
-        }
-        stack.setCount(Math.min(stack.getMaxStackSize(), count));
-    }
-
     public static ParsedRecipe parseRecipe(ItemStack primaryOutput, Config recipe) {
-        List<ItemStack> inputs = parseIngredientList(recipe.getValue("input"));
+        List<CountableIngredient> rawinputs = parseIngredientList(recipe.getValue("input"));
         primaryOutput.setCount(Recipes.tryGetCount(recipe));
         List<Integer> inputCount = recipe.getIntList("count");
-        if (inputCount.size() != inputs.size()) {
-            throw new Recipes.RecipeException("Mismatched ingredient count: " + inputs.size() + " != " + inputCount.size() + ".");
+        if (inputCount.size() != rawinputs.size()) {
+            throw new Recipes.RecipeException("Mismatched ingredient count: " + rawinputs.size() + " != " + inputCount.size() + ".");
         }
-        for (int i = 0; i < inputs.size(); i++) {
-            setCount(inputs, inputCount, i);
+
+        List<CountableIngredient>inputs = new ArrayList<>();
+        for (int i = 0; i < rawinputs.size(); i++) {
+            int count = inputCount.get(i);
+            if (count > 0) {
+                inputs.add(new CountableIngredient(rawinputs.get(i).getIngredient(), count));
+            }
         }
         List<ItemStack> outputs = new ArrayList<>();
         if (recipe.hasPath("secondaryOutput")) {
-            List<ItemStack> secondaryOutputs = parseIngredientList(recipe.getValue("secondaryOutput"));
+            List<CountableIngredient> rawsecondaryoutputs = parseIngredientList(recipe.getValue("secondaryOutput"));
             List<Integer> secondaryOutputCount = recipe.getIntList("secondaryOutputCount");
-            if (secondaryOutputs.size() != secondaryOutputCount.size()) {
-                throw new Recipes.RecipeException("Mismatched secoundary output count: " + secondaryOutputs.size() + " != " + secondaryOutputCount.size() + ".");
+            if (rawsecondaryoutputs.size() != secondaryOutputCount.size()) {
+                throw new Recipes.RecipeException("Mismatched secoundary output count: " + rawsecondaryoutputs.size() + " != " + secondaryOutputCount.size() + ".");
             }
-            for (int i = 0; i < secondaryOutputs.size(); i++) {
-                setCount(secondaryOutputs, secondaryOutputCount, i);
+            List<ItemStack> secondaryOutputs = new ArrayList<>();
+            for (int i = 0; i < rawsecondaryoutputs.size(); i++) {
+                int count = inputCount.get(i);
+                if (count <= 0) {
+                    continue;
+                }
+                for (ItemStack stack : rawsecondaryoutputs.get(i).getIngredient().getMatchingStacks()) {
+                    ItemStack sec = stack.copy();
+                    sec.setCount(count);
+                    secondaryOutputs.add(sec);
+                }
             }
             outputs.addAll(secondaryOutputs);
         }
@@ -269,25 +287,29 @@ public class RecipeIntegration {
         if (recipe.hasPath("chancedOutput")) {
             Object unwrapped = recipe.getValue("chancedOutput").unwrapped();
             if (unwrapped instanceof Collection) {
-                for (Object ing : (Collection)unwrapped) {
+                for (Object ing : (Collection<?>)unwrapped) {
                     if (!(ing instanceof HashMap)) {
                         throw new Recipes.RecipeException("Invalid chanced output definition" + ing);
                     }
-                    Object item = ((HashMap) ing).get("item");
-                    List<ItemStack> stacks = transformIngredient(item);
+                    Object item = ((HashMap<?,?>) ing).get("item");
+                    List<CountableIngredient> stacks = transformIngredient(item);
                     if (stacks.isEmpty()) {
                         throw new Recipes.RecipeException("Invalid chanced output definition for item " + ing);
                     }
-                    ItemStack chancedStack = stacks.get(0);
-                    Object chance = ((HashMap) ing).get("chance");
+                    CountableIngredient chancedStack = stacks.get(0);
+                    Object chance = ((HashMap<?,?>) ing).get("chance");
                     if (!(chance instanceof Number)) {
                         throw new Recipes.RecipeException("Invalid chanced output definition for chance " + ing);
                     }
-                    Object boost = ((HashMap) ing).get("boost");
+                    Object boost = ((HashMap<?,?>) ing).get("boost");
                     if (!(boost instanceof Number)) {
                         throw new Recipes.RecipeException("Invalid chanced output definition for boost " + ing);
                     }
-                    chancedOutputs.add(new ChancedOutput(chancedStack, ((Number) chance).intValue(), ((Number) boost).intValue()));
+                    if (chancedStack.getIngredient().getMatchingStacks().length != 1) {
+                        throw new Recipes.RecipeException("More than one item matched for chanced output " + ing);
+                    }
+
+                    chancedOutputs.add(new ChancedOutput(chancedStack.getIngredient().getMatchingStacks()[0], ((Number) chance).intValue(), ((Number) boost).intValue()));
                 }
             }
         }
@@ -322,41 +344,49 @@ public class RecipeIntegration {
         return OreDictionary.getOres(ref);
     }
 
-    public static List<ItemStack> transformIngredient(Object ing) {
-        if (ing instanceof String) {
-            String ref = ing.toString();
-            for (ItemStack o : transformStack(ref)) {
-                return Collections.singletonList(o.copy());
-            }
-        } else if (ing instanceof ItemStack) {
-            return Collections.singletonList(((ItemStack) ing).copy());
-        } else if (ing instanceof Map) {
-            Map m = (Map) ing;
+    public static List<CountableIngredient> transformIngredient(Object ing) {
+        if (ing instanceof Map) {
+            Map<?, ?> m = (Map<?, ?>) ing;
             Object oreDict = m.get("oreDict");
             Object gtid = m.get("gtid");
-            if (!(oreDict instanceof String) || !(gtid instanceof String)) {
-                throw new Recipes.RecipeException("Invalid ingredient type: " + ing.getClass().getName() + " @ " + ing);
-            }
-            List<ItemStack> ores = transformStack((String) oreDict);
-            for (ItemStack o : ores) {
-                if (o.getItem() instanceof MetaItem) {
-                    MetaItem.MetaValueItem item = ((MetaItem) o.getItem()).getItem(o);
-                    if (gtid.equals(item.unlocalizedName)) {
-                        return Collections.singletonList(o.copy());
+            if (oreDict instanceof String && gtid instanceof String) {
+                List<ItemStack> ores = transformStack((String) oreDict);
+                for (ItemStack o : ores) {
+                    if (o.getItem() instanceof MetaItem) {
+                        MetaItem<?>.MetaValueItem item = ((MetaItem<?>) o.getItem()).getItem(o);
+                        if (gtid.equals(item.unlocalizedName)) {
+                            return Collections.singletonList(CountableIngredient.from(o.copy()));
+                        }
                     }
                 }
             }
-        } else if (ing == null) {
+        }
+
+        if (ing instanceof ItemStack) {
+            return Collections.singletonList(CountableIngredient.from((ItemStack) ing));
+        }
+
+        if (ing == null) {
             return Collections.emptyList();
         }
+
+        Object o = Recipes.parseIngredient(ing);
+        if (o instanceof String) {
+            return Collections.singletonList(CountableIngredient.from((String)o));
+        }
+
+        if (o instanceof ItemStack) {
+            return Collections.singletonList(CountableIngredient.from((ItemStack) o));
+        }
+
         throw new Recipes.RecipeException("Invalid ingredient type: " + ing.getClass().getName() + " @ " + ing);
     }
 
-    private static List<ItemStack> parseIngredientList(ConfigValue input) {
+    private static List<CountableIngredient> parseIngredientList(ConfigValue input) {
         Object unwrapped = input.unwrapped();
-        List<ItemStack> ingredients = new ArrayList<>();
+        List<CountableIngredient> ingredients = new ArrayList<>();
         if (unwrapped instanceof Collection) {
-            for (Object ing : (Collection)unwrapped) {
+            for (Object ing : (Collection<?>)unwrapped) {
                 ingredients.addAll(transformIngredient(ing));
             }
         } else {

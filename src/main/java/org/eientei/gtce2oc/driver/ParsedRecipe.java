@@ -1,12 +1,13 @@
 package org.eientei.gtce2oc.driver;
 
+import gregtech.api.recipes.CountableIngredient;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.fluids.FluidStack;
 
 import java.util.List;
 
 public class ParsedRecipe {
-    private List<ItemStack> inputs;
+    private List<CountableIngredient> inputs;
     private final List<FluidStack> inputFluids;
     private final List<FluidStack> outputFluids;
     private final List<ItemStack> outputs;
@@ -14,7 +15,7 @@ public class ParsedRecipe {
     private final int eu;
     private final int duration;
 
-    public ParsedRecipe(List<ItemStack> inputs, List<FluidStack> inputFluids, List<FluidStack> outputFluids,  List<ItemStack> outputs, List<ChancedOutput> chancedOutputs, int eu, int duration) {
+    public ParsedRecipe(List<CountableIngredient> inputs, List<FluidStack> inputFluids, List<FluidStack> outputFluids,  List<ItemStack> outputs, List<ChancedOutput> chancedOutputs, int eu, int duration) {
         this.inputs = inputs;
         this.inputFluids = inputFluids;
         this.outputFluids = outputFluids;
@@ -24,11 +25,11 @@ public class ParsedRecipe {
         this.duration = duration;
     }
 
-    public List<ItemStack> getInputs() {
+    public List<CountableIngredient> getInputs() {
         return inputs;
     }
 
-    public void setInputs(List<ItemStack> inputs) {
+    public void setInputs(List<CountableIngredient> inputs) {
         this.inputs = inputs;
     }
     public List<FluidStack> getInputFluids() {

@@ -8,9 +8,11 @@ buildscript {
     dependencies {
         classpath "net.minecraftforge.gradle:ForgeGradle:2.3-SNAPSHOT"
         classpath "gradle.plugin.com.matthewprenger:CurseGradle:1.4.0"
+        classpath "com.wynprice.cursemaven:CurseMaven:2.1.5"
     }
 }
 
+apply plugin: "com.wynprice.cursemaven"
 apply plugin: "com.matthewprenger.cursegradle"
 apply plugin: "net.minecraftforge.gradle.forge"
 apply plugin: "idea"
@@ -58,19 +60,15 @@ minecraft {
     replace "@MODURL@", config.mod.url
 }
 
-repositories {
-    maven { url = "https://minecraft.curseforge.com/api/maven/" }
-}
-
 configurations {
     embedded
     compile.extendsFrom provided, embedded
 }
 
 dependencies {
-    compile "opencomputers:OpenComputers:MC${config.minecraft.version}:${config.opencomputers.version}"
-    compile "gregtechce:gregtech:${config.minecraft.version}:${config.gregtechce.version}"
-    provided ("appeng:appliedenergistics2:${config.ae2.version}:api") {
+    compile "curse.maven:OpenComputers:2828357"
+    compile "curse.maven:gregtech:2974205"
+    provided ("curse.maven:appliedenergistics2-api:2747063") {
         transitive = false
     }
 }
