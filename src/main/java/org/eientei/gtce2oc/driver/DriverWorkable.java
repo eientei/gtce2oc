@@ -79,7 +79,7 @@ public class DriverWorkable extends DriverSidedTileEntity {
             return new Object[]{tileEntity.isWorkingEnabled()};
         }
 
-        @Callback(doc = "function():boolean --  Sets working enabled, return last working enabled.")
+        @Callback(doc = "function(WorkingEnabled:boolean):boolean --  Sets working enabled, return last working enabled.")
         public Object[] setWorkingEnabled(final Context context, final Arguments args) {
             boolean last_state = tileEntity.isWorkingEnabled();
             tileEntity.setWorkingEnabled(args.checkBoolean(0));
