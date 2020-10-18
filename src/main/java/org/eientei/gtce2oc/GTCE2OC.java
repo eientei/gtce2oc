@@ -20,6 +20,7 @@ import org.apache.commons.lang3.reflect.FieldUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eientei.gtce2oc.driver.DriverEnergyContainer;
+import org.eientei.gtce2oc.driver.DriverWorkable;
 import org.eientei.gtce2oc.driver.EventHandler;
 import org.eientei.gtce2oc.driver.RecipeIntegration;
 import org.eientei.gtce2oc.impl.MachineConfig;
@@ -115,5 +116,6 @@ public class GTCE2OC {
         MinecraftForge.EVENT_BUS.register(EventHandler.class);
         IMC.registerToolDurabilityProvider("org.eientei.gtce2oc.driver.EventHandler.getDurability");
         Driver.add(new DriverEnergyContainer());
+        Driver.add(new DriverWorkable());
     }
 }
