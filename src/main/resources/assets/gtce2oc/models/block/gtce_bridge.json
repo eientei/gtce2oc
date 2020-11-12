@@ -1,0 +1,12 @@
+{
+  "parent": "block/cube",
+  "textures": {
+    "particle": "gtce2oc:blocks/gtce_bridge_top",
+    "down": "gtce2oc:blocks/gtce_bridge_down",
+    "up": "gtce2oc:blocks/gtce_bridge_top",
+    "north": "gtce2oc:blocks/gtce_bridge_side",
+    "east": "gtce2oc:blocks/gtce_bridge_side",
+    "south": "gtce2oc:blocks/gtce_bridge_side",
+    "west": "gtce2oc:blocks/gtce_bridge_side"
+  }
+}

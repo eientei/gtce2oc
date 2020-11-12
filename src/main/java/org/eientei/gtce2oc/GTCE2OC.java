@@ -3,6 +3,9 @@ package org.eientei.gtce2oc;
 import gregtech.api.capability.IEnergyContainer;
 import li.cil.oc.api.Driver;
 import li.cil.oc.api.IMC;
+import net.minecraft.creativetab.CreativeTabs;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ResourceLocation;
@@ -14,6 +17,8 @@ import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.server.timings.TimeTracker;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.reflect.FieldUtils;
@@ -25,6 +30,7 @@ import org.eientei.gtce2oc.driver.EventHandler;
 import org.eientei.gtce2oc.driver.RecipeIntegration;
 import org.eientei.gtce2oc.impl.MachineConfig;
 
+import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
@@ -127,5 +133,20 @@ public class GTCE2OC {
         IMC.registerToolDurabilityProvider("org.eientei.gtce2oc.driver.EventHandler.getDurability");
         Driver.add(new DriverEnergyContainer());
         Driver.add(new DriverWorkable());
+    }
+
+
+    public static final CreativeTabs CREATIVE_TABS = new CreativeTabs(MODID) {
+        @Override
+        @SideOnly(Side.CLIENT)
+        public @Nonnull
+        ItemStack createIcon() {
+            return new ItemStack(Item.getItemFromBlock(ObjectRegistryHandler.BLOCK_GTCE_BRIDGE));
+        }
+    };
+
+    @Mod.EventHandler
+    public void preinit(FMLPreInitializationEvent event) {
+        MinecraftForge.EVENT_BUS.register(new ObjectRegistryHandler());
     }
 }
