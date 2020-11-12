@@ -28,7 +28,8 @@ public class GTCE2OCTimeTracker extends TimeTracker<TileEntity> {
 
     @Override
     public void trackEnd(TileEntity tracking) {
-        if ((tracking instanceof PowerAcceptor || tracking instanceof PowerBalancer) && tracking.hasCapability(GTCE2OC.ENERGY_CONTAINER_CAP, null)) {
+        if ((tracking instanceof PowerAcceptor || tracking instanceof PowerBalancer)
+                && tracking.hasCapability(GTCE2OC.ENERGY_CONTAINER_CAP, null)) {
             IEnergyContainer capability = tracking.getCapability(GTCE2OC.ENERGY_CONTAINER_CAP, null);
             if (capability instanceof EnergyContainerTickable) {
                 ((EnergyContainerTickable) capability).updateEnergyContainer();

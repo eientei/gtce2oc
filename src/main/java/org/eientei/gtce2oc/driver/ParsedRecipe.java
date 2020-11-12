@@ -15,7 +15,15 @@ public class ParsedRecipe {
     private final int eu;
     private final int duration;
 
-    public ParsedRecipe(List<CountableIngredient> inputs, List<FluidStack> inputFluids, List<FluidStack> outputFluids,  List<ItemStack> outputs, List<ChancedOutput> chancedOutputs, int eu, int duration) {
+    public ParsedRecipe(
+            List<CountableIngredient> inputs,
+            List<FluidStack> inputFluids,
+            List<FluidStack> outputFluids,
+            List<ItemStack> outputs,
+            List<ChancedOutput> chancedOutputs,
+            int eu,
+            int duration
+    ) {
         this.inputs = inputs;
         this.inputFluids = inputFluids;
         this.outputFluids = outputFluids;

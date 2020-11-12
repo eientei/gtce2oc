@@ -195,7 +195,7 @@ public class EnergyContainerAcceptor implements IEnergyContainer, EnergyContaine
         loop: for (EnumFacing side : sides) {
             if (powerAcceptor.canConnectPower(side)) {
                 Option<Connector> connopt = powerAcceptor.connector(side);
-                if(connopt.isEmpty()) {
+                if (connopt.isEmpty()) {
                     continue;
                 }
                 Connector conn = connopt.get();

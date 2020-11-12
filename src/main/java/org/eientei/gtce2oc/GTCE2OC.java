@@ -51,7 +51,9 @@ public class GTCE2OC {
     @CapabilityInject(IEnergyContainer.class)
     public static Capability<IEnergyContainer> ENERGY_CONTAINER_CAP = null;
 
-    public static ResourceLocation ENERGY_CONTAINER_CAP_PROVIDER = new ResourceLocation(GTCE2OC.MODID, "energy_container");
+    public static ResourceLocation ENERGY_CONTAINER_CAP_PROVIDER = new ResourceLocation(
+            GTCE2OC.MODID,
+            "energy_container");
 
     public GTCE2OC() {
         MinecraftForge.EVENT_BUS.register(new GTCE2OCEventHandler());
@@ -84,18 +86,26 @@ public class GTCE2OC {
         GTCE2OC.POWER_BALANCER = new MachineConfig(config, "PowerBalancer", 128, 1, vert, horiz);
 
         MachineConfig others = new MachineConfig();
-        others.setInputs(MachineConfig.GET_SIDES(config, "Other", "possible_inputs", EnumFacing.values(), "Sides from which other machines will possibly accept energy. Valid values are: " + Arrays.toString(MachineConfig.VALID_SIDES)));
-        others.setOutputs(MachineConfig.GET_SIDES(config, "Other", "outputs", new EnumFacing[0]));
-        others.setInputAmperage(config.getInt("input_amperage", "Other", 1, 0, Integer.MAX_VALUE, "Amperage other machines will accept as input in one tick"));
-        others.setOutputAmperage(config.getInt("output_amperage", "Other", 1, 0, Integer.MAX_VALUE, "Amperage other machines will emmit if stored enough energy"));
-        others.setInputVoltage(config.getInt("input_voltage", "Other", 128, 0, Integer.MAX_VALUE, "Voltage other machines will accept as input without blowing"));
-        others.setOutputVoltage(config.getInt("output_voltage", "Other", 128, 0, Integer.MAX_VALUE, "Voltage other machines will emmit if stored enough energy"));
+        others.setInputs(MachineConfig.getSides(config, "Other", "possible_inputs", EnumFacing.values(),
+                "Sides from which other machines will possibly accept energy. Valid values are: "
+                        + Arrays.toString(MachineConfig.VALID_SIDES)));
+        others.setOutputs(MachineConfig.getSides(config, "Other", "outputs", new EnumFacing[0]));
+        others.setInputAmperage(config.getInt("input_amperage", "Other", 1, 0, Integer.MAX_VALUE,
+                "Amperage other machines will accept as input in one tick"));
+        others.setOutputAmperage(config.getInt("output_amperage", "Other", 1, 0, Integer.MAX_VALUE,
+                "Amperage other machines will emmit if stored enough energy"));
+        others.setInputVoltage(config.getInt("input_voltage", "Other", 128, 0, Integer.MAX_VALUE,
+                "Voltage other machines will accept as input without blowing"));
+        others.setOutputVoltage(config.getInt("output_voltage", "Other", 128, 0, Integer.MAX_VALUE,
+                "Voltage other machines will emmit if stored enough energy"));
         GTCE2OC.POWER_ACCEPTOR = others;
 
         config.save();
 
         RecipeIntegration.registerRecipeHandlers();
-        File recipesConfig = new File(new File(Loader.instance().getConfigDir(), "opencomputers"), "gregtechce.recipes");
+        File recipesConfig = new File(
+                new File(Loader.instance().getConfigDir(), "opencomputers"),
+                "gregtechce.recipes");
         if (!recipesConfig.exists()) {
             if (!recipesConfig.getParentFile().exists() && !recipesConfig.getParentFile().mkdirs()) {
                 throw new Exception("Could not create missing parent directory");

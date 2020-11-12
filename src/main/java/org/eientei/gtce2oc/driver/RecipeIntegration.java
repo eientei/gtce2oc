@@ -23,9 +23,12 @@ import java.util.function.Consumer;
 
 import static org.eientei.gtce2oc.GTCE2OC.LOGGER;
 
-public class RecipeIntegration {
+public final class RecipeIntegration {
+    private RecipeIntegration() {
+    }
+
     public static class HandlerWrapper extends AbstractFunction2<ItemStack, Config, BoxedUnit> {
-        private Consumer<ParsedRecipe> handler;
+        private final Consumer<ParsedRecipe> handler;
 
         public HandlerWrapper(Consumer<ParsedRecipe> handler) {
             this.handler = handler;
@@ -44,9 +47,12 @@ public class RecipeIntegration {
             if (stacks.length == 1) {
                 return stacks[0].getDisplayName();
             }
+
             StringBuilder p = new StringBuilder();
             boolean first = true;
+
             p.append("(");
+
             for (ItemStack s : stacks) {
                 if (!first) {
                     p.append(" | ");
@@ -54,19 +60,23 @@ public class RecipeIntegration {
                 p.append(nameItem(s));
                 first = false;
             }
+
             p.append(")");
+
             return p.toString();
         } else if (o instanceof ItemStack) {
             return ((ItemStack) o).getDisplayName();
         } else if (o instanceof FluidStack) {
             return ((FluidStack) o).getLocalizedName();
         }
+
         return "???";
     }
 
     public static void namedList(StringBuilder p, List<?> list) {
         p.append("[");
         boolean first = true;
+
         for (Object o : list) {
             if (!first) {
                 p.append(", ");
@@ -88,7 +98,7 @@ public class RecipeIntegration {
         p.append("]");
     }
 
-    public static void registerRecipeHandlers() throws IllegalAccessException {
+    public static void registerGTCEMachineRecipeHandlers() throws IllegalAccessException {
         for (Field field : RecipeMaps.class.getDeclaredFields()) {
             if (!field.getType().equals(RecipeMap.class)) {
                 continue;
@@ -171,6 +181,10 @@ public class RecipeIntegration {
                 builder.buildAndRegister();
             }));
         }
+    }
+
+    public static void registerRecipeHandlers() throws IllegalAccessException {
+        registerGTCEMachineRecipeHandlers();
 
         Recipes.registerRecipeHandler("shaped", new HandlerWrapper(parsed -> {
             if (parsed.getInputs().size() != 9) {
@@ -236,7 +250,11 @@ public class RecipeIntegration {
                     }
                     Option<Function2<ItemStack, Config, BoxedUnit>> func = Recipes.recipeHandlers().get(type);
                     if (func.isDefined()) {
-                        LOGGER.info("Registering recipe alternative for handler {} and output {}", type, output.getDisplayName());
+                        LOGGER.info(
+                                "Registering recipe alternative for handler {} and output {}",
+                                type,
+                                output.getDisplayName()
+                        );
                         func.get().apply(output, altconf);
                     }
                 }
@@ -250,10 +268,12 @@ public class RecipeIntegration {
         primaryOutput.setCount(Recipes.tryGetCount(recipe));
         List<Integer> inputCount = recipe.getIntList("count");
         if (inputCount.size() != rawinputs.size()) {
-            throw new Recipes.RecipeException("Mismatched ingredient count: " + rawinputs.size() + " != " + inputCount.size() + ".");
+            throw new Recipes.RecipeException(
+                    "Mismatched ingredient count: " + rawinputs.size() + " != " + inputCount.size() + "."
+            );
         }
 
-        List<CountableIngredient>inputs = new ArrayList<>();
+        List<CountableIngredient> inputs = new ArrayList<>();
         for (int i = 0; i < rawinputs.size(); i++) {
             int count = inputCount.get(i);
             if (count > 0) {
@@ -265,7 +285,10 @@ public class RecipeIntegration {
             List<CountableIngredient> rawsecondaryoutputs = parseIngredientList(recipe.getValue("secondaryOutput"));
             List<Integer> secondaryOutputCount = recipe.getIntList("secondaryOutputCount");
             if (rawsecondaryoutputs.size() != secondaryOutputCount.size()) {
-                throw new Recipes.RecipeException("Mismatched secoundary output count: " + rawsecondaryoutputs.size() + " != " + secondaryOutputCount.size() + ".");
+                throw new Recipes.RecipeException(
+                        "Mismatched secoundary output count: " + rawsecondaryoutputs.size()
+                                + " != " + secondaryOutputCount.size() + "."
+                );
             }
             List<ItemStack> secondaryOutputs = new ArrayList<>();
             for (int i = 0; i < rawsecondaryoutputs.size(); i++) {
@@ -287,21 +310,21 @@ public class RecipeIntegration {
         if (recipe.hasPath("chancedOutput")) {
             Object unwrapped = recipe.getValue("chancedOutput").unwrapped();
             if (unwrapped instanceof Collection) {
-                for (Object ing : (Collection<?>)unwrapped) {
+                for (Object ing : (Collection<?>) unwrapped) {
                     if (!(ing instanceof HashMap)) {
                         throw new Recipes.RecipeException("Invalid chanced output definition" + ing);
                     }
-                    Object item = ((HashMap<?,?>) ing).get("item");
+                    Object item = ((HashMap<?, ?>) ing).get("item");
                     List<CountableIngredient> stacks = transformIngredient(item);
                     if (stacks.isEmpty()) {
                         throw new Recipes.RecipeException("Invalid chanced output definition for item " + ing);
                     }
                     CountableIngredient chancedStack = stacks.get(0);
-                    Object chance = ((HashMap<?,?>) ing).get("chance");
+                    Object chance = ((HashMap<?, ?>) ing).get("chance");
                     if (!(chance instanceof Number)) {
                         throw new Recipes.RecipeException("Invalid chanced output definition for chance " + ing);
                     }
-                    Object boost = ((HashMap<?,?>) ing).get("boost");
+                    Object boost = ((HashMap<?, ?>) ing).get("boost");
                     if (!(boost instanceof Number)) {
                         throw new Recipes.RecipeException("Invalid chanced output definition for boost " + ing);
                     }
@@ -309,7 +332,11 @@ public class RecipeIntegration {
                         throw new Recipes.RecipeException("More than one item matched for chanced output " + ing);
                     }
 
-                    chancedOutputs.add(new ChancedOutput(chancedStack.getIngredient().getMatchingStacks()[0], ((Number) chance).intValue(), ((Number) boost).intValue()));
+                    chancedOutputs.add(new ChancedOutput(
+                            chancedStack.getIngredient().getMatchingStacks()[0],
+                            ((Number) chance).intValue(),
+                            ((Number) boost).intValue()
+                    ));
                 }
             }
         }
@@ -372,7 +399,7 @@ public class RecipeIntegration {
 
         Object o = Recipes.parseIngredient(ing);
         if (o instanceof String) {
-            return Collections.singletonList(CountableIngredient.from((String)o));
+            return Collections.singletonList(CountableIngredient.from((String) o));
         }
 
         if (o instanceof ItemStack) {
@@ -386,7 +413,7 @@ public class RecipeIntegration {
         Object unwrapped = input.unwrapped();
         List<CountableIngredient> ingredients = new ArrayList<>();
         if (unwrapped instanceof Collection) {
-            for (Object ing : (Collection<?>)unwrapped) {
+            for (Object ing : (Collection<?>) unwrapped) {
                 ingredients.addAll(transformIngredient(ing));
             }
         } else {

@@ -54,13 +54,15 @@ public class GTCE2OCEventHandler {
 
     private void attachCapability(AttachCapabilitiesEvent<?> event) {
         if (event.getObject() instanceof PowerBalancer) {
-            event.addCapability(GTCE2OC.ENERGY_CONTAINER_CAP_PROVIDER, new EnergyContainerProvider(new EnergyContainerBalancer((PowerBalancer) event.getObject(), GTCE2OC.POWER_BALANCER)));
+            event.addCapability(GTCE2OC.ENERGY_CONTAINER_CAP_PROVIDER, new EnergyContainerProvider(
+                    new EnergyContainerBalancer((PowerBalancer) event.getObject(), GTCE2OC.POWER_BALANCER)));
         } else if (event.getObject() instanceof PowerAcceptor) {
             MachineConfig config = GTCE2OC.POWER_ACCEPTOR;
             if (event.getObject() instanceof PowerConverter) {
                 config = GTCE2OC.POWER_CONVERTER;
             }
-            event.addCapability(GTCE2OC.ENERGY_CONTAINER_CAP_PROVIDER, new EnergyContainerProvider(new EnergyContainerAcceptor((PowerAcceptor) event.getObject(), config)));
+            event.addCapability(GTCE2OC.ENERGY_CONTAINER_CAP_PROVIDER, new EnergyContainerProvider(
+                    new EnergyContainerAcceptor((PowerAcceptor) event.getObject(), config)));
         }
     }
 }
