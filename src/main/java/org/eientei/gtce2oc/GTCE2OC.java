@@ -3,28 +3,20 @@ package org.eientei.gtce2oc;
 import gregtech.api.capability.IEnergyContainer;
 import li.cil.oc.api.Driver;
 import li.cil.oc.api.IMC;
-import net.minecraft.block.Block;
-import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.item.Item;
-import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.client.event.ModelRegistryEvent;
-import net.minecraftforge.client.model.ModelLoader;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.CapabilityInject;
 import net.minecraftforge.common.config.Configuration;
-import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.common.registry.GameRegistry;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.server.timings.TimeTracker;
@@ -32,13 +24,11 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.reflect.FieldUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.eientei.gtce2oc.block.BlockGTCEBridge;
 import org.eientei.gtce2oc.driver.DriverEnergyContainer;
 import org.eientei.gtce2oc.driver.DriverWorkable;
 import org.eientei.gtce2oc.driver.EventHandler;
 import org.eientei.gtce2oc.driver.RecipeIntegration;
 import org.eientei.gtce2oc.impl.MachineConfig;
-import org.eientei.gtce2oc.tile.TileEntityGTCEBridge;
 
 import javax.annotation.Nonnull;
 import java.io.File;
@@ -146,9 +136,11 @@ public class GTCE2OC {
     }
 
 
-    public static final CreativeTabs creativeTab = new CreativeTabs(MODID) {
+    public static final CreativeTabs CREATIVE_TABS = new CreativeTabs(MODID) {
         @Override
-        public @Nonnull ItemStack createIcon() {
+        @SideOnly(Side.CLIENT)
+        public @Nonnull
+        ItemStack createIcon() {
             return new ItemStack(Item.getItemFromBlock(ObjectRegistryHandler.BLOCK_GTCE_BRIDGE));
         }
     };
@@ -157,6 +149,4 @@ public class GTCE2OC {
     public void preinit(FMLPreInitializationEvent event) {
         MinecraftForge.EVENT_BUS.register(new ObjectRegistryHandler());
     }
-
-
 }

@@ -70,22 +70,22 @@ public class DriverWorkable extends DriverSidedTileEntity {
 
         @Callback(doc = "function():number --  Returns the MaxProgress!")
         public Object[] getMaxProgress(final Context context, final Arguments args) {
-            return new Object[]{tileEntity.getMaxProgress()};
+            return new Object[] {tileEntity.getMaxProgress()};
         }
 
         @Callback(doc = "function():number --  Returns the Progress!")
         public Object[] getProgress(final Context context, final Arguments args) {
-            return new Object[]{tileEntity.getProgress()};
+            return new Object[] {tileEntity.getProgress()};
         }
 
         @Callback(doc = "function():boolean --  Returns is active or not.")
         public Object[] isActive(final Context context, final Arguments args) {
-            return new Object[]{tileEntity.isActive()};
+            return new Object[] {tileEntity.isActive()};
         }
 
         @Callback(doc = "function():boolean --  Returns is working enabled.")
         public Object[] isWorkingEnabled(final Context context, final Arguments args) {
-            return new Object[]{tileEntity.isWorkingEnabled()};
+            return new Object[] {tileEntity.isWorkingEnabled()};
         }
 
         @Callback(doc = "function(WorkingEnabled:boolean):boolean -- "
@@ -93,22 +93,22 @@ public class DriverWorkable extends DriverSidedTileEntity {
         public Object[] setWorkingEnabled(final Context context, final Arguments args) {
             boolean lsatState = tileEntity.isWorkingEnabled();
             tileEntity.setWorkingEnabled(args.checkBoolean(0));
-            return new Object[]{lsatState};
+            return new Object[] {lsatState};
         }
 
         @Callback(doc = "function():table --  Returns current recipe.")
         public Object[] getCurrentRecipe(final Context context, final Arguments args) {
-            if(tileEntity instanceof AbstractRecipeLogic){
+            if (tileEntity instanceof AbstractRecipeLogic) {
                 Recipe previousRecipe = ReflectionHelper.getPrivateValue(AbstractRecipeLogic.class,
                         (AbstractRecipeLogic) tileEntity, "previousRecipe");
-                if (previousRecipe != null && tileEntity.isActive()){
+                if (previousRecipe != null && tileEntity.isActive()) {
                     HashMap<String, Object> recipe = new HashMap();
                     recipe.put("duration", previousRecipe.getDuration());
                     recipe.put("EUt", previousRecipe.getEUt());
 
                     List<Map<String, Object>> itemInput = new ArrayList<>();
                     List<CountableIngredient> inputs = previousRecipe.getInputs();
-                    inputs.forEach(iR->{
+                    inputs.forEach(iR -> {
                         for (ItemStack itemStack : iR.getIngredient().getMatchingStacks()) {
                             Map<String, Object> input = new HashMap<>();
                             input.put("count", iR.getCount());
@@ -116,31 +116,37 @@ public class DriverWorkable extends DriverSidedTileEntity {
                             itemInput.add(input);
                         }
                     });
-                    if(!itemInput.isEmpty()) recipe.put("itemInputs", itemInput);
+                    if (!itemInput.isEmpty()) {
+                        recipe.put("itemInputs", itemInput);
+                    }
 
                     List<Map<String, Object>> fluidInput = new ArrayList<>();
                     List<FluidStack> fluidInputs = previousRecipe.getFluidInputs();
-                    fluidInputs.forEach(iR->{
+                    fluidInputs.forEach(iR -> {
                         Map<String, Object> input = new HashMap<>();
                         input.put("count", iR.amount);
                         input.put("name", iR.getFluid().getName());
                         fluidInput.add(input);
                     });
-                    if(!fluidInput.isEmpty()) recipe.put("fluidInputs", fluidInput);
+                    if (!fluidInput.isEmpty()) {
+                        recipe.put("fluidInputs", fluidInput);
+                    }
 
                     List<Map<String, Object>> itemOutput = new ArrayList<>();
                     List<ItemStack> outputs = previousRecipe.getOutputs();
-                    outputs.forEach(iR->{
+                    outputs.forEach(iR -> {
                         Map<String, Object> output = new HashMap<>();
                         output.put("count", iR.getCount());
                         output.put("name", iR.getDisplayName());
                         itemOutput.add(output);
                     });
-                    if(!itemOutput.isEmpty()) recipe.put("itemOutputs", itemOutput);
+                    if (!itemOutput.isEmpty()) {
+                        recipe.put("itemOutputs", itemOutput);
+                    }
 
                     List<Map<String, Object>> chancedItemOutput = new ArrayList<>();
                     List<Recipe.ChanceEntry> chancedOutputs = previousRecipe.getChancedOutputs();
-                    chancedOutputs.forEach(iR->{
+                    chancedOutputs.forEach(iR -> {
                         Map<String, Object> output = new HashMap<>();
                         output.put("chance", iR.getChance());
                         output.put("boostPerTier", iR.getBoostPerTier());
@@ -148,22 +154,26 @@ public class DriverWorkable extends DriverSidedTileEntity {
                         output.put("name", iR.getItemStack().getDisplayName());
                         chancedItemOutput.add(output);
                     });
-                    if(!chancedItemOutput.isEmpty()) recipe.put("chancedItemOutput", chancedItemOutput);
+                    if (!chancedItemOutput.isEmpty()) {
+                        recipe.put("chancedItemOutput", chancedItemOutput);
+                    }
 
                     List<Map<String, Object>> fluidOutput = new ArrayList<>();
                     List<FluidStack> fluidOutputs = previousRecipe.getFluidOutputs();
-                    fluidOutputs.forEach(iR->{
+                    fluidOutputs.forEach(iR -> {
                         Map<String, Object> output = new HashMap<>();
                         output.put("count", iR.amount);
                         output.put("name", iR.getFluid().getName());
                         fluidOutput.add(output);
                     });
-                    if(!fluidOutput.isEmpty()) recipe.put("fluidOutputs", fluidOutput);
-                    return new Object[]{recipe};
+                    if (!fluidOutput.isEmpty()) {
+                        recipe.put("fluidOutputs", fluidOutput);
+                    }
+                    return new Object[] {recipe};
                 }
-                return new Object[]{null};
+                return new Object[] {null};
             }
-            return new Object[]{null, "invalid machine"};
+            return new Object[] {null, "invalid machine"};
         }
 
         @Override

@@ -30,23 +30,28 @@ import java.util.List;
 public class TileEntityGTCEBridge extends TileEntityOCComponent implements ICapabilityProvider, IEnergyContainer {
     private long lastUpdate = 0;
     private final List<BlockPos> activeNodes = new ArrayList<>();
-    private EnumFacing Facing = EnumFacing.UP;
+    private EnumFacing frontFacing = EnumFacing.UP;
     private IBlockState state;
     private WeakReference<EnergyNet> currentEnergyNet = new WeakReference<>(null);
-    public TileEntityGTCEBridge() { super("gtce_bridge", Visibility.Network); }
 
-    @Callback(doc = "function():table -- Returns machines list.")
-    public Object[] getMachines(Context context, Arguments args){
-        return new Object[]{ getMachines() };
+    public TileEntityGTCEBridge() {
+        super("gtce_bridge", Visibility.Network);
     }
 
-    @Callback(doc = "function():boolean -- Returns whether EnergyNet updated. (You'd better check it before getMachines())")
-    public Object[] isDirty(Context context, Arguments args){
+    @Callback(doc = "function():table -- Returns machines list.")
+    public Object[] getMachines(Context context, Arguments args) {
+        return new Object[] {getMachines()};
+    }
+
+    @Callback(doc = "function():boolean -- Returns have EnergyNet updated.")
+    public Object[] isDirty(Context context, Arguments args) {
         EnergyNet energyNet = getEnergyNet();
-        if (energyNet != null)
-            if(lastUpdate != energyNet.getLastUpdate())
-                return new Object[]{ true};
-        return new Object[]{ false};
+        if (energyNet != null) {
+            if (lastUpdate != energyNet.getLastUpdate()) {
+                return new Object[] {true};
+            }
+        }
+        return new Object[] {false};
     }
 
     public IBlockState getBlockState() {
@@ -56,22 +61,27 @@ public class TileEntityGTCEBridge extends TileEntityOCComponent implements ICapa
         return this.state;
     }
 
-    private List<MachineObject> getMachines(){
+    private List<MachineObject> getMachines() {
         updateNodes();
         List<MachineObject> machines = new ArrayList<>();
-        for(BlockPos pos : activeNodes){
+        for (BlockPos pos : activeNodes) {
             BlockPos.PooledMutableBlockPos blockPos = BlockPos.PooledMutableBlockPos.retain();
             TileEntity tileEntityCable = world.getTileEntity(pos);
-            if (!(tileEntityCable instanceof TileEntityCable))
+            if (!(tileEntityCable instanceof TileEntityCable)) {
                 continue;
+            }
             for (EnumFacing facing : EnumFacing.VALUES) {
                 blockPos.setPos(pos).move(facing);
-                if (!world.isBlockLoaded(pos)) continue; //do not allow cables to load chunks
+                if (!world.isBlockLoaded(pos)) {
+                    continue; //do not allow cables to load chunks
+                }
                 TileEntity tileEntity = world.getTileEntity(blockPos);
-                if (tileEntity instanceof MetaTileEntityHolder && !((TileEntityCable) tileEntityCable).isConnectionBlocked(AttachmentType.PIPE, facing)){
+                if (tileEntity instanceof MetaTileEntityHolder
+                        && !((TileEntityCable) tileEntityCable).isConnectionBlocked(AttachmentType.PIPE, facing)) {
                     MachineObject mo = new MachineObject((MetaTileEntityHolder) tileEntity);
-                    if(!machines.contains(mo))
+                    if (!machines.contains(mo)) {
                         machines.add(mo);
+                    }
                 }
             }
         }
@@ -80,26 +90,33 @@ public class TileEntityGTCEBridge extends TileEntityOCComponent implements ICapa
 
     private void updateNodes() {
         EnergyNet energyNet = getEnergyNet();
-        if (energyNet == null) return;
-        if (energyNet.getLastUpdate() == lastUpdate) return;
+        if (energyNet == null) {
+            return;
+        }
+        if (energyNet.getLastUpdate() == lastUpdate) {
+            return;
+        }
         lastUpdate = energyNet.getLastUpdate();
         activeNodes.clear();
-        energyNet.getAllNodes().forEach((pos, node)->{
-            if(node.isActive)
+        energyNet.getAllNodes().forEach((pos, node) -> {
+            if (node.isActive) {
                 activeNodes.add(pos);
+            }
         });
     }
 
     private EnergyNet getEnergyNet() {
-        if (!world.isRemote){
-            TileEntity te = this.world.getTileEntity(new BlockPos.MutableBlockPos(this.pos).move(Facing));
-            if (te instanceof TileEntityCable){
+        if (!world.isRemote) {
+            TileEntity te = this.world.getTileEntity(new BlockPos.MutableBlockPos(this.pos).move(frontFacing));
+            if (te instanceof TileEntityCable) {
                 TileEntityCable tileEntityCable = (TileEntityCable) te;
                 EnergyNet currentEnergyNet = this.currentEnergyNet.get();
-                if (currentEnergyNet != null && currentEnergyNet.isValid() &&
-                        currentEnergyNet.containsNode(tileEntityCable.getPipePos()))
+                if (currentEnergyNet != null && currentEnergyNet.isValid()
+                        && currentEnergyNet.containsNode(tileEntityCable.getPipePos())) {
                     return currentEnergyNet; //return current net if it is still valid
-                WorldENet worldENet = (WorldENet) tileEntityCable.getPipeBlock().getWorldPipeNet(tileEntityCable.getPipeWorld());
+                }
+                WorldENet worldENet =
+                        (WorldENet) tileEntityCable.getPipeBlock().getWorldPipeNet(tileEntityCable.getPipeWorld());
                 currentEnergyNet = worldENet.getNetFromPos(tileEntityCable.getPipePos());
                 if (currentEnergyNet != null) {
                     this.currentEnergyNet = new WeakReference<>(currentEnergyNet);
@@ -111,16 +128,18 @@ public class TileEntityGTCEBridge extends TileEntityOCComponent implements ICapa
     }
 
     public EnumFacing getFrontFacing() {
-        return Facing;
+        return frontFacing;
     }
 
     public void setFrontFacing(EnumFacing frontFacing) {
-        if (Facing == frontFacing) return;
-        Facing = frontFacing;
+        if (this.frontFacing == frontFacing) {
+            return;
+        }
+        this.frontFacing = frontFacing;
         markDirty();
-        if (world != null){
+        if (world != null) {
             world.notifyBlockUpdate(this.pos, getBlockState(), getBlockState(), 3);
-            world.notifyNeighborsOfStateChange( this.pos, this.blockType, true );
+            world.notifyNeighborsOfStateChange(this.pos, this.blockType, true);
         }
     }
 
@@ -131,48 +150,51 @@ public class TileEntityGTCEBridge extends TileEntityOCComponent implements ICapa
 
     @Override
     public SPacketUpdateTileEntity getUpdatePacket() {
-        return new SPacketUpdateTileEntity( this.pos, 1, this.getUpdateTag() );
+        return new SPacketUpdateTileEntity(this.pos, 1, this.getUpdateTag());
     }
 
     @Override
     public NBTTagCompound getUpdateTag() {
         final NBTTagCompound data = new NBTTagCompound();
-        data.setInteger("FACING", Facing.getIndex());
-        data.setInteger( "x", this.pos.getX() );
-        data.setInteger( "y", this.pos.getY() );
-        data.setInteger( "z", this.pos.getZ() );
+        data.setInteger("FACING", frontFacing.getIndex());
+        data.setInteger("x", this.pos.getX());
+        data.setInteger("y", this.pos.getY());
+        data.setInteger("z", this.pos.getZ());
         return data;
     }
 
     @Override
     public void handleUpdateTag(NBTTagCompound tag) {
         EnumFacing facing = EnumFacing.values()[tag.getInteger("FACING")];
-        if (facing != Facing){
-            Facing = facing; world.notifyBlockUpdate(this.pos, getBlockState(), getBlockState(),3);
+        if (facing != frontFacing) {
+            frontFacing = facing;
+            world.notifyBlockUpdate(this.pos, getBlockState(), getBlockState(), 3);
         }
     }
 
     @Override
     public void readFromNBT(NBTTagCompound compound) {
-        Facing = EnumFacing.values()[compound.getInteger("FACING")];
+        frontFacing = EnumFacing.values()[compound.getInteger("FACING")];
         super.readFromNBT(compound);
     }
 
     @Override
     public NBTTagCompound writeToNBT(NBTTagCompound compound) {
-        compound.setInteger("FACING", Facing.getIndex());
+        compound.setInteger("FACING", frontFacing.getIndex());
         return super.writeToNBT(compound);
     }
 
     @Override
     public boolean hasCapability(Capability<?> capability, @Nullable EnumFacing facing) {
-        return (capability == GregtechCapabilities.CAPABILITY_ENERGY_CONTAINER && Facing == facing) || super.hasCapability(capability, facing);
+        return (capability == GregtechCapabilities.CAPABILITY_ENERGY_CONTAINER && frontFacing == facing)
+                || super.hasCapability(capability, facing);
     }
 
     @Override
     public <T> T getCapability(Capability<T> capability, @Nullable EnumFacing facing) {
-        if (capability == GregtechCapabilities.CAPABILITY_ENERGY_CONTAINER && Facing == facing)
-            return (T)this;
+        if (capability == GregtechCapabilities.CAPABILITY_ENERGY_CONTAINER && frontFacing == facing) {
+            return (T) this;
+        }
         return super.getCapability(capability, facing);
     }
 

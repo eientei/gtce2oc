@@ -19,7 +19,7 @@ public class ObjectRegistryHandler {
     @GameRegistry.ObjectHolder(GTCE2OC.MODID + ":" + BlockGTCEBridge.NAME)
     public static BlockGTCEBridge BLOCK_GTCE_BRIDGE;
 
-    public ObjectRegistryHandler(){
+    public ObjectRegistryHandler() {
         BLOCK_GTCE_BRIDGE = new BlockGTCEBridge();
     }
 
@@ -28,14 +28,16 @@ public class ObjectRegistryHandler {
         ItemBlock itemGTCEBridge = new ItemBlock(BLOCK_GTCE_BRIDGE);
         itemGTCEBridge.setRegistryName(BLOCK_GTCE_BRIDGE.getRegistryName());
         itemGTCEBridge.setTranslationKey(BLOCK_GTCE_BRIDGE.getTranslationKey());
-        itemGTCEBridge.setCreativeTab(GTCE2OC.creativeTab);
-        event.getRegistry().register(new ItemBlock(BLOCK_GTCE_BRIDGE).setRegistryName(BLOCK_GTCE_BRIDGE.getRegistryName()));
+        itemGTCEBridge.setCreativeTab(GTCE2OC.CREATIVE_TABS);
+        event.getRegistry()
+                .register(new ItemBlock(BLOCK_GTCE_BRIDGE).setRegistryName(BLOCK_GTCE_BRIDGE.getRegistryName()));
     }
 
     @SubscribeEvent
     public void addBlocks(RegistryEvent.Register<Block> event) {
         event.getRegistry().register(BLOCK_GTCE_BRIDGE);
-        GameRegistry.registerTileEntity(TileEntityGTCEBridge.class, new ResourceLocation(GTCE2OC.MODID, BLOCK_GTCE_BRIDGE.NAME));
+        GameRegistry.registerTileEntity(TileEntityGTCEBridge.class,
+                new ResourceLocation(GTCE2OC.MODID, BLOCK_GTCE_BRIDGE.NAME));
     }
 
     @SubscribeEvent

@@ -17,11 +17,12 @@ import org.eientei.gtce2oc.tile.TileEntityGTCEBridge;
 public class BlockGTCEBridge extends Block implements ITileEntityProvider {
     public static final String NAME = "gtce_bridge";
     private static final PropertyDirection FACING = PropertyDirection.create("facing");
+
     public BlockGTCEBridge() {
         super(Material.IRON);
         this.setRegistryName(NAME);
-        this.setTranslationKey(GTCE2OC.MODID+":"+NAME);
-        setCreativeTab(GTCE2OC.creativeTab);
+        this.setTranslationKey(GTCE2OC.MODID + ":" + NAME);
+        setCreativeTab(GTCE2OC.CREATIVE_TABS);
     }
 
     @Override
@@ -42,7 +43,7 @@ public class BlockGTCEBridge extends Block implements ITileEntityProvider {
     @Override
     public boolean rotateBlock(World world, BlockPos pos, EnumFacing axis) {
         TileEntity te = world.getTileEntity(pos);
-        if(te instanceof TileEntityGTCEBridge){
+        if (te instanceof TileEntityGTCEBridge) {
             ((TileEntityGTCEBridge) te).setFrontFacing(axis);
             return true;
         }
@@ -53,8 +54,9 @@ public class BlockGTCEBridge extends Block implements ITileEntityProvider {
     public IBlockState getActualState(IBlockState state, IBlockAccess worldIn, BlockPos pos) {
         TileEntity te = worldIn.getTileEntity(pos);
         EnumFacing facing = EnumFacing.UP;
-        if (te instanceof TileEntityGTCEBridge)
+        if (te instanceof TileEntityGTCEBridge) {
             facing = ((TileEntityGTCEBridge) te).getFrontFacing();
+        }
         return super.getActualState(state, worldIn, pos).withProperty(FACING, facing);
     }
 }

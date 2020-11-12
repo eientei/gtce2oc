@@ -1,21 +1,17 @@
 package org.eientei.gtce2oc.driver.values;
 
-import appeng.helpers.DualityInterface;
 import gregtech.api.capability.GregtechCapabilities;
 import gregtech.api.capability.GregtechTileCapabilities;
 import gregtech.api.capability.IEnergyContainer;
 import gregtech.api.capability.IWorkable;
 import gregtech.api.capability.impl.AbstractRecipeLogic;
-import gregtech.api.items.metaitem.MetaItem;
 import gregtech.api.metatileentity.MetaTileEntityHolder;
 import gregtech.api.recipes.CountableIngredient;
 import gregtech.api.recipes.Recipe;
-import gregtech.common.items.MetaItem2;
 import li.cil.oc.api.machine.Arguments;
 import li.cil.oc.api.machine.Callback;
 import li.cil.oc.api.machine.Context;
 import li.cil.oc.api.machine.Value;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTUtil;
@@ -34,37 +30,42 @@ public class MachineObject implements Value {
     private World world;
     private int dim;
 
-    public MachineObject(MetaTileEntityHolder te){
+    public MachineObject(MetaTileEntityHolder te) {
         pos = te.getPos();
         dim = te.getWorld().provider.getDimension();
         world = te.getWorld();
     }
 
-    public MachineObject(){
+    public MachineObject() {
     }
 
-    private MetaTileEntityHolder getTile(){
+    private MetaTileEntityHolder getTile() {
         TileEntity te = world.getTileEntity(pos);
-        if (te instanceof MetaTileEntityHolder)
+        if (te instanceof MetaTileEntityHolder) {
             return (MetaTileEntityHolder) te;
+        }
         return null;
     }
 
 
-    private <T> T getCapability(Capability<T> capability){
+    private <T> T getCapability(Capability<T> capability) {
         TileEntity te = world.getTileEntity(pos);
-        if (te instanceof MetaTileEntityHolder)
+        if (te instanceof MetaTileEntityHolder) {
             return te.getCapability(capability, null);
+        }
         return null;
     }
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         MachineObject that = (MachineObject) o;
-        return dim == that.dim &&
-                Objects.equals(pos, that.pos);
+        return dim == that.dim && Objects.equals(pos, that.pos);
     }
 
     @Override
@@ -107,34 +108,36 @@ public class MachineObject implements Value {
 
     @Callback(doc = "function():boolean --  Returns whether machine valid.")
     public Object[] isValid(final Context context, final Arguments args) {
-        if(getTile() == null)
-            return new Object[]{false};
-        return new Object[]{true};
+        if (getTile() == null) {
+            return new Object[] {false};
+        }
+        return new Object[] {true};
     }
 
     @Callback(doc = "function():string --  Returns machine name.")
     public Object[] getMachineName(final Context context, final Arguments args) {
         MetaTileEntityHolder te = getTile();
-        if(te != null)
-            return new Object[]{te.getMetaTileEntity().metaTileEntityId.getPath()};
-        return new Object[]{null, "invalid machine"};
+        if (te != null) {
+            return new Object[] {te.getMetaTileEntity().metaTileEntityId.getPath()};
+        }
+        return new Object[] {null, "invalid machine"};
     }
 
 
     @Callback(doc = "function():table --  Returns current recipe.")
     public Object[] getCurrentRecipe(final Context context, final Arguments args) {
         IWorkable aRL = getCapability(GregtechTileCapabilities.CAPABILITY_WORKABLE);
-        if(aRL instanceof AbstractRecipeLogic){
+        if (aRL instanceof AbstractRecipeLogic) {
             Recipe previousRecipe = ReflectionHelper.getPrivateValue(AbstractRecipeLogic.class,
                     (AbstractRecipeLogic) aRL, "previousRecipe");
-            if (previousRecipe != null && aRL.isActive()){
+            if (previousRecipe != null && aRL.isActive()) {
                 HashMap<String, Object> recipe = new HashMap();
                 recipe.put("duration", previousRecipe.getDuration());
                 recipe.put("EUt", previousRecipe.getEUt());
 
                 List<Map<String, Object>> itemInput = new ArrayList<>();
                 List<CountableIngredient> inputs = previousRecipe.getInputs();
-                inputs.forEach(iR->{
+                inputs.forEach(iR -> {
                     for (ItemStack itemStack : iR.getIngredient().getMatchingStacks()) {
                         Map<String, Object> input = new HashMap<>();
                         input.put("count", iR.getCount());
@@ -142,31 +145,36 @@ public class MachineObject implements Value {
                         itemInput.add(input);
                     }
                 });
-                if(!itemInput.isEmpty()) recipe.put("itemInputs", itemInput);
+                if (!itemInput.isEmpty()) {
+                    recipe.put("itemInputs", itemInput);
+                }
 
                 List<Map<String, Object>> fluidInput = new ArrayList<>();
                 List<FluidStack> fluidInputs = previousRecipe.getFluidInputs();
-                fluidInputs.forEach(iR->{
+                fluidInputs.forEach(iR -> {
                     Map<String, Object> input = new HashMap<>();
                     input.put("count", iR.amount);
                     input.put("name", iR.getFluid().getName());
                     fluidInput.add(input);
                 });
-                if(!fluidInput.isEmpty()) recipe.put("fluidInputs", fluidInput);
+                if (!fluidInput.isEmpty()) {
+                    recipe.put("fluidInputs", fluidInput);
+                }
 
                 List<Map<String, Object>> itemOutput = new ArrayList<>();
                 List<ItemStack> outputs = previousRecipe.getOutputs();
-                outputs.forEach(iR->{
+                outputs.forEach(iR -> {
                     Map<String, Object> output = new HashMap<>();
                     output.put("count", iR.getCount());
                     output.put("name", iR.getDisplayName());
                     itemOutput.add(output);
                 });
-                if(!itemOutput.isEmpty()) recipe.put("itemOutputs", itemOutput);
-
+                if (!itemOutput.isEmpty()) {
+                    recipe.put("itemOutputs", itemOutput);
+                }
                 List<Map<String, Object>> chancedItemOutput = new ArrayList<>();
                 List<Recipe.ChanceEntry> chancedOutputs = previousRecipe.getChancedOutputs();
-                chancedOutputs.forEach(iR->{
+                chancedOutputs.forEach(iR -> {
                     Map<String, Object> output = new HashMap<>();
                     output.put("chance", iR.getChance());
                     output.put("boostPerTier", iR.getBoostPerTier());
@@ -174,111 +182,125 @@ public class MachineObject implements Value {
                     output.put("name", iR.getItemStack().getDisplayName());
                     chancedItemOutput.add(output);
                 });
-                if(!chancedItemOutput.isEmpty()) recipe.put("chancedItemOutput", chancedItemOutput);
-
+                if (!chancedItemOutput.isEmpty()) {
+                    recipe.put("chancedItemOutput", chancedItemOutput);
+                }
                 List<Map<String, Object>> fluidOutput = new ArrayList<>();
                 List<FluidStack> fluidOutputs = previousRecipe.getFluidOutputs();
-                fluidOutputs.forEach(iR->{
+                fluidOutputs.forEach(iR -> {
                     Map<String, Object> output = new HashMap<>();
                     output.put("count", iR.amount);
                     output.put("name", iR.getFluid().getName());
                     fluidOutput.add(output);
                 });
-                if(!fluidOutput.isEmpty()) recipe.put("fluidOutputs", fluidOutput);
-                return new Object[]{recipe};
+                if (!fluidOutput.isEmpty()) {
+                    recipe.put("fluidOutputs", fluidOutput);
+                }
+                return new Object[] {recipe};
             }
-            return new Object[]{null};
+            return new Object[] {null};
         }
-        return new Object[]{null, "invalid machine"};
+        return new Object[] {null, "invalid machine"};
     }
 
     @Callback(doc = "function():number --  Returns the amount of electricity contained in this Block, in EU units!")
     public Object[] getEnergyStored(final Context context, final Arguments args) {
         IEnergyContainer tileEntity = getCapability(GregtechCapabilities.CAPABILITY_ENERGY_CONTAINER);
-        if(tileEntity == null)
-            return new Object[]{null, "invalid machine"};
-        return new Object[]{tileEntity.getEnergyStored()};
+        if (tileEntity == null) {
+            return new Object[] {null, "invalid machine"};
+        }
+        return new Object[] {tileEntity.getEnergyStored()};
     }
 
     @Callback(doc = "function():number --  Returns the amount of electricity containable in this Block, in EU units!")
     public Object[] getEnergyCapacity(final Context context, final Arguments args) {
         IEnergyContainer tileEntity = getCapability(GregtechCapabilities.CAPABILITY_ENERGY_CONTAINER);
-        if(tileEntity == null)
-            return new Object[]{null, "invalid machine"};
-        return new Object[]{tileEntity.getEnergyCapacity()};
+        if (tileEntity == null) {
+            return new Object[] {null, "invalid machine"};
+        }
+        return new Object[] {tileEntity.getEnergyCapacity()};
     }
 
     @Callback(doc = "function():number --  Gets the Output in EU/p.")
     public Object[] getOutputVoltage(final Context context, final Arguments args) {
         IEnergyContainer tileEntity = getCapability(GregtechCapabilities.CAPABILITY_ENERGY_CONTAINER);
-        if(tileEntity == null)
-            return new Object[]{null, "invalid machine"};
-        return new Object[]{tileEntity.getOutputVoltage()};
+        if (tileEntity == null) {
+            return new Object[] {null, "invalid machine"};
+        }
+        return new Object[] {tileEntity.getOutputVoltage()};
     }
 
     @Callback(doc = "function():number -- Gets the amount of Energy Packets per tick.")
     public Object[] getOutputAmperage(final Context context, final Arguments args) {
         IEnergyContainer tileEntity = getCapability(GregtechCapabilities.CAPABILITY_ENERGY_CONTAINER);
-        if(tileEntity == null)
-            return new Object[]{null, "invalid machine"};
-        return new Object[]{tileEntity.getOutputAmperage()};
+        if (tileEntity == null) {
+            return new Object[] {null, "invalid machine"};
+        }
+        return new Object[] {tileEntity.getOutputAmperage()};
     }
 
     @Callback(doc = "function():number -- Gets the maximum Input in EU/p.")
     public Object[] getInputVoltage(final Context context, final Arguments args) {
         IEnergyContainer tileEntity = getCapability(GregtechCapabilities.CAPABILITY_ENERGY_CONTAINER);
-        if(tileEntity == null)
-            return new Object[]{null, "invalid machine"};
-        return new Object[]{tileEntity.getInputVoltage()};
+        if (tileEntity == null) {
+            return new Object[] {null, "invalid machine"};
+        }
+        return new Object[] {tileEntity.getInputVoltage()};
     }
 
     @Callback(doc = "function():number -- Gets the amount of Energy Packets per tick.")
     public Object[] getInputAmperage(final Context context, final Arguments args) {
         IEnergyContainer tileEntity = getCapability(GregtechCapabilities.CAPABILITY_ENERGY_CONTAINER);
-        if(tileEntity == null)
-            return new Object[]{null, "invalid machine"};
-        return new Object[]{tileEntity.getInputAmperage()};
+        if (tileEntity == null) {
+            return new Object[] {null, "invalid machine"};
+        }
+        return new Object[] {tileEntity.getInputAmperage()};
     }
 
     @Callback(doc = "function():number --  Returns the MaxProgress!")
     public Object[] getMaxProgress(final Context context, final Arguments args) {
         IWorkable tileEntity = getCapability(GregtechTileCapabilities.CAPABILITY_WORKABLE);
-        if(tileEntity == null)
-            return new Object[]{null, "invalid machine"};
-        return new Object[]{tileEntity.getMaxProgress()};
+        if (tileEntity == null) {
+            return new Object[] {null, "invalid machine"};
+        }
+        return new Object[] {tileEntity.getMaxProgress()};
     }
 
     @Callback(doc = "function():number --  Returns the Progress!")
     public Object[] getProgress(final Context context, final Arguments args) {
         IWorkable tileEntity = getCapability(GregtechTileCapabilities.CAPABILITY_WORKABLE);
-        if(tileEntity == null)
-            return new Object[]{null, "invalid machine"};
-        return new Object[]{tileEntity.getProgress()};
+        if (tileEntity == null) {
+            return new Object[] {null, "invalid machine"};
+        }
+        return new Object[] {tileEntity.getProgress()};
     }
 
     @Callback(doc = "function():boolean --  Returns is active or not.")
     public Object[] isActive(final Context context, final Arguments args) {
         IWorkable tileEntity = getCapability(GregtechTileCapabilities.CAPABILITY_WORKABLE);
-        if(tileEntity == null)
-            return new Object[]{null, "invalid machine"};
-        return new Object[]{tileEntity.isActive()};
+        if (tileEntity == null) {
+            return new Object[] {null, "invalid machine"};
+        }
+        return new Object[] {tileEntity.isActive()};
     }
 
     @Callback(doc = "function():boolean --  Returns is working enabled.")
     public Object[] isWorkingEnabled(final Context context, final Arguments args) {
         IWorkable tileEntity = getCapability(GregtechTileCapabilities.CAPABILITY_WORKABLE);
-        if(tileEntity == null)
-            return new Object[]{null, "invalid machine"};
-        return new Object[]{tileEntity.isWorkingEnabled()};
+        if (tileEntity == null) {
+            return new Object[] {null, "invalid machine"};
+        }
+        return new Object[] {tileEntity.isWorkingEnabled()};
     }
 
     @Callback(doc = "function(WorkingEnabled:boolean):boolean --  Sets working enabled, return last working enabled.")
     public Object[] setWorkingEnabled(final Context context, final Arguments args) {
         IWorkable tileEntity = getCapability(GregtechTileCapabilities.CAPABILITY_WORKABLE);
-        if(tileEntity == null)
-            return new Object[]{null, "invalid machine"};
-        boolean last_state = tileEntity.isWorkingEnabled();
+        if (tileEntity == null) {
+            return new Object[] {null, "invalid machine"};
+        }
+        boolean lastState = tileEntity.isWorkingEnabled();
         tileEntity.setWorkingEnabled(args.checkBoolean(0));
-        return new Object[]{last_state};
+        return new Object[] {lastState};
     }
 }

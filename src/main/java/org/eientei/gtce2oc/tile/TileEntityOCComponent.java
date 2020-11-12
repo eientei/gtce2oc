@@ -20,18 +20,21 @@ public abstract class TileEntityOCComponent extends TileEntityEnvironment implem
 
     @Override
     public void load(NBTTagCompound nbt) {
-        if(nbt.hasKey("visibility"))
+        if (nbt.hasKey("visibility")) {
             this.visibility = Visibility.values()[nbt.getInteger("visibility")];
+        }
 
-        if(nbt.hasKey("node"))
+        if (nbt.hasKey("node")) {
             node.load(nbt.getCompoundTag("node"));
+        }
     }
 
     @Override
     public void save(NBTTagCompound nbt) {
         setupNode();
-        if(node == null)
+        if (node == null) {
             return;
+        }
 
         NBTTagCompound nodeTag = new NBTTagCompound();
         node.save(nodeTag);
@@ -40,22 +43,28 @@ public abstract class TileEntityOCComponent extends TileEntityEnvironment implem
         nbt.setInteger("visibility", visibility.ordinal());
     }
 
-    private void setupNode(){
-        if(this.node() == null || this.node().network() == null)
-            this.node = API.network.newNode(this, visibility).withComponent(getComponentName()).withConnector().create();
+    private void setupNode() {
+        if (this.node() == null || this.node().network() == null) {
+            this.node =
+                    API.network.newNode(this, visibility).withComponent(getComponentName()).withConnector().create();
+        }
     }
 
     @Override
-    public boolean canUpdate(){
+    public boolean canUpdate() {
         return false;
     }
 
-    public void sendComputerSignal(String eventType, String name){
-        if(node == null) return;
+    public void sendComputerSignal(String eventType, String name) {
+        if (node == null) {
+            return;
+        }
         node.sendToReachable("computer.signal", eventType.toLowerCase(), name);
     }
 
-    public String getComponentName() { return this.name; }
+    public String getComponentName() {
+        return this.name;
+    }
 
     @Override
     public void update() {
