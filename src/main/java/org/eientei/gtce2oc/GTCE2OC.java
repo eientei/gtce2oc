@@ -136,39 +136,17 @@ public class GTCE2OC {
     }
 
 
-    public static final CreativeTabs creativeTab = new CreativeTabs(MODNAME) {
+    public static final CreativeTabs creativeTab = new CreativeTabs(MODID) {
         @Override
-        @SideOnly(Side.CLIENT)
         public @Nonnull ItemStack createIcon() {
-            return new ItemStack(Item.getItemFromBlock(BLOCK_GTCE_BRIDGE));
+            return new ItemStack(Item.getItemFromBlock(ObjectRegistryHandler.BLOCK_GTCE_BRIDGE));
         }
     };
 
-    public static BlockGTCEBridge BLOCK_GTCE_BRIDGE;
-
     @Mod.EventHandler
     public void preinit(FMLPreInitializationEvent event) {
-        BLOCK_GTCE_BRIDGE = new BlockGTCEBridge();
+        MinecraftForge.EVENT_BUS.register(new ObjectRegistryHandler());
     }
 
-    @Mod.EventBusSubscriber
-    public static class ObjectRegistryHandler {
-        @SubscribeEvent
-        public static void addItems(RegistryEvent.Register<Item> event) {
-            event.getRegistry().register(new ItemBlock(BLOCK_GTCE_BRIDGE).setRegistryName(BLOCK_GTCE_BRIDGE.getRegistryName()));
-        }
 
-        @SubscribeEvent
-        public static void addBlocks(RegistryEvent.Register<Block> event) {
-            event.getRegistry().register(BLOCK_GTCE_BRIDGE);
-            GameRegistry.registerTileEntity(TileEntityGTCEBridge.class, new ResourceLocation(MODID, BLOCK_GTCE_BRIDGE.NAME));
-        }
-
-        @SubscribeEvent
-        @SideOnly(Side.CLIENT)
-        public static void onRegisterModels(ModelRegistryEvent event) {
-            ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(BLOCK_GTCE_BRIDGE), 0,
-                    new ModelResourceLocation(BLOCK_GTCE_BRIDGE.getRegistryName().toString()));
-        }
-    }
 }

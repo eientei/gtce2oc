@@ -15,12 +15,12 @@ import org.eientei.gtce2oc.GTCE2OC;
 import org.eientei.gtce2oc.tile.TileEntityGTCEBridge;
 
 public class BlockGTCEBridge extends Block implements ITileEntityProvider {
-    public static String NAME = "gtce_bridge";
+    public static final String NAME = "gtce_bridge";
     private static final PropertyDirection FACING = PropertyDirection.create("facing");
     public BlockGTCEBridge() {
         super(Material.IRON);
         this.setRegistryName(NAME);
-        this.setTranslationKey(GTCE2OC.MODID+"."+NAME);
+        this.setTranslationKey(GTCE2OC.MODID+":"+NAME);
         setCreativeTab(GTCE2OC.creativeTab);
     }
 

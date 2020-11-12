@@ -1,2 +1,4 @@
+
 itemGroup.gtce2oc=GTCE 2 OC
-tile.gtce2oc.gtce_bridge.name=GTCE Bridge
+
+tile.gtce2oc:gtce_bridge.name=GTCE Bridge
