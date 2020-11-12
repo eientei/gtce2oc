@@ -40,7 +40,10 @@ public class DriverEnergyContainer extends DriverSidedTileEntity {
             return new Environment((IEnergyContainer) tileEntity);
         }
         if (tileEntity instanceof MetaTileEntityHolder) {
-            return new Environment(tileEntity.getCapability(GregtechCapabilities.CAPABILITY_ENERGY_CONTAINER, side), (MetaTileEntityHolder) tileEntity);
+            return new Environment(
+                    tileEntity.getCapability(GregtechCapabilities.CAPABILITY_ENERGY_CONTAINER, side),
+                    (MetaTileEntityHolder) tileEntity
+            );
         }
         return null;
     }
@@ -62,7 +65,8 @@ public class DriverEnergyContainer extends DriverSidedTileEntity {
             return new Object[]{tileEntity.getEnergyStored()};
         }
 
-        @Callback(doc = "function():number --  Returns the amount of electricity containable in this Block, in EU units!")
+        @Callback(doc = "function():number --  "
+                + "Returns the amount of electricity containable in this Block, in EU units!")
         public Object[] getEnergyCapacity(final Context context, final Arguments args) {
             return new Object[]{tileEntity.getEnergyCapacity()};
         }

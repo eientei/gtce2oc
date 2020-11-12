@@ -33,7 +33,7 @@ public class EnergyContainerBalancer implements IEnergyContainer, EnergyContaine
         int outputs = 0;
         for (EnumFacing side : config.getOutputs()) {
             if (powerBalancer.canConnect(side)) {
-                sides |= 1<<side.ordinal();
+                sides |= 1 << side.ordinal();
                 outputs++;
             }
         }

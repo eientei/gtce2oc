@@ -1,8 +1,6 @@
 package org.eientei.gtce2oc.driver;
 
-import gregtech.api.capability.GregtechCapabilities;
 import gregtech.api.capability.GregtechTileCapabilities;
-import gregtech.api.capability.IEnergyContainer;
 import gregtech.api.capability.IWorkable;
 import gregtech.api.capability.impl.AbstractRecipeLogic;
 import gregtech.api.metatileentity.MetaTileEntityHolder;
@@ -50,7 +48,10 @@ public class DriverWorkable extends DriverSidedTileEntity {
             return new DriverWorkable.Environment((IWorkable) tileEntity);
         }
         if (tileEntity instanceof MetaTileEntityHolder) {
-            return new DriverWorkable.Environment(tileEntity.getCapability(GregtechTileCapabilities.CAPABILITY_WORKABLE, side), (MetaTileEntityHolder) tileEntity);
+            return new DriverWorkable.Environment(
+                    tileEntity.getCapability(GregtechTileCapabilities.CAPABILITY_WORKABLE, side),
+                    (MetaTileEntityHolder) tileEntity
+            );
         }
         return null;
     }
@@ -87,11 +88,12 @@ public class DriverWorkable extends DriverSidedTileEntity {
             return new Object[]{tileEntity.isWorkingEnabled()};
         }
 
-        @Callback(doc = "function(WorkingEnabled:boolean):boolean --  Sets working enabled, return last working enabled.")
+        @Callback(doc = "function(WorkingEnabled:boolean):boolean -- "
+                + "Sets working enabled, return last working enabled.")
         public Object[] setWorkingEnabled(final Context context, final Arguments args) {
-            boolean last_state = tileEntity.isWorkingEnabled();
+            boolean lsatState = tileEntity.isWorkingEnabled();
             tileEntity.setWorkingEnabled(args.checkBoolean(0));
-            return new Object[]{last_state};
+            return new Object[]{lsatState};
         }
 
         @Callback(doc = "function():table --  Returns current recipe.")
